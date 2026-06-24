@@ -87,7 +87,7 @@ svg{display:block;width:100%}
 
 <div class="hdr">
   <div class="hdr-left">
-    <h1>2026 SaaS Growth — YTD Performance Dashboard</h1>
+    <h1>2026 SaaS Growth &mdash; YTD Performance Dashboard</h1>
     <p>The team generated <strong style="color:#FF5000">$654,880</strong> across <strong style="color:#FF5000">508 opportunities</strong> year-to-date. Use the tabs below to explore performance by employee or coach.</p>
   </div>
   <div class="hdr-right">
@@ -105,7 +105,7 @@ svg{display:block;width:100%}
        ondragleave="this.classList.remove('drag')"
        ondrop="event.preventDefault();this.classList.remove('drag');handleFiles(event.dataTransfer.files)">
     <p>Drop your .xlsx file here or click to browse</p>
-    <small>Accepts: Weekly SaaS Growth .xlsx &#8212; SaaS Growth detail sheet</small>
+    <small>Accepts: Weekly SaaS Growth .xlsx &mdash; SaaS Growth detail sheet</small>
   </div>
   <input type="file" id="fileInput" accept=".xlsx" onchange="handleFiles(this.files)">
   <div class="upload-log-mini">
@@ -123,7 +123,6 @@ svg{display:block;width:100%}
   <div class="tab" onclick="showTab('log',this)">Upload Log</div>
 </div>
 
-<!-- YTD SUMMARY -->
 <div class="pane active" id="pane-summary">
   <div class="kpi-row">
     <div class="kpi"><div class="kpi-val" id="s-total">$654,880</div><div class="kpi-lbl">Total SaaS Growth YTD</div></div>
@@ -132,17 +131,16 @@ svg{display:block;width:100%}
     <div class="kpi"><div class="kpi-val" id="s-ba">84.4%</div><div class="kpi-lbl">BA Engagement Rate</div></div>
   </div>
   <div class="grid">
-    <div class="panel full"><div class="panel-title">Monthly SaaS Growth &amp; Opportunity Volume</div><svg id="c1" height="230"></svg><div class="legend"><div class="leg"><div class="leg-dot" style="background:#2D9D6A"></div>&gt;$120k</div><div class="leg"><div class="leg-dot" style="background:#D4A017"></div>$80k&#8211;$120k</div><div class="leg"><div class="leg-dot" style="background:#E53E3E"></div>&lt;$80k</div><div class="leg"><div class="leg-dot" style="background:#CBD5E0"></div>Partial month</div></div></div>
-    <div class="panel"><div class="panel-title">SaaS Growth by Type &#8212; Top 8</div><svg id="c2" height="310"></svg></div>
-    <div class="panel"><div class="panel-title">Coach Performance &#8212; Q1 vs. Q2 2026</div><svg id="c4" height="310"></svg><div class="legend"><div class="leg"><div class="leg-dot" style="background:#0F1735"></div>Q1 2026</div><div class="leg"><div class="leg-dot" style="background:#FF5000"></div>Q2 2026</div></div></div>
-    <div class="panel full"><div class="panel-title">PCSM Performance Ranking &#8212; Total Dollars &amp; Avg Deal Size</div><div id="c3-wrap"><svg id="c3"></svg></div><div class="caption" id="c3-caption">Lorenz Marsh and Chyna Elias lead on deal quality (avg &gt;$1,900) despite lower opportunity volume. Summer Rima leads total output at $69,723 across 46 deals.</div></div>
+    <div class="panel full"><div class="panel-title">Monthly SaaS Growth &amp; Opportunity Volume</div><svg id="c1" height="230"></svg><div class="legend"><div class="leg"><div class="leg-dot" style="background:#2D9D6A"></div>&gt;$120k</div><div class="leg"><div class="leg-dot" style="background:#D4A017"></div>$80k&ndash;$120k</div><div class="leg"><div class="leg-dot" style="background:#E53E3E"></div>&lt;$80k</div><div class="leg"><div class="leg-dot" style="background:#CBD5E0"></div>Partial month</div></div></div>
+    <div class="panel"><div class="panel-title">SaaS Growth by Type &mdash; Top 8</div><svg id="c2" height="310"></svg></div>
+    <div class="panel"><div class="panel-title">Coach Performance &mdash; Q1 vs. Q2 2026</div><svg id="c4" height="310"></svg><div class="legend"><div class="leg"><div class="leg-dot" style="background:#0F1735"></div>Q1 2026</div><div class="leg"><div class="leg-dot" style="background:#FF5000"></div>Q2 2026</div></div></div>
+    <div class="panel full"><div class="panel-title">PCSM Performance Ranking &mdash; Total Dollars &amp; Avg Deal Size</div><div id="c3-wrap"><svg id="c3"></svg></div><div class="caption">Lorenz Marsh and Chyna Elias lead on deal quality (avg &gt;$1,900) despite lower opportunity volume. Summer Rima leads total output at $69,723 across 46 deals.</div></div>
     <div class="panel"><div class="panel-title">BA Presence: Impact on Average Deal Size</div><svg id="c5" height="170"></svg><div class="caption">BA presence correlates with a 27% higher average deal ($1,333 vs. $1,050). 84% of opportunities include a BA.</div></div>
     <div class="panel"><div class="panel-title">Net New Adds vs. Upgrades and Expansions</div><svg id="c6" height="170"></svg><div class="caption">Upgrades generate two-thirds of all dollars. Existing accounts average $1,540 per deal vs. $976 for net new adds.</div></div>
-    <div class="panel full"><div class="panel-title">SaaS Growth Type Mix by Coach &#8212; 100% of Dollars</div><svg id="c7" height="250"></svg><div class="legend"><div class="leg"><div class="leg-dot" style="background:#FF5000"></div>TL Increase</div><div class="leg"><div class="leg-dot" style="background:#E07B39"></div>New TL</div><div class="leg"><div class="leg-dot" style="background:#0F6B9E"></div>New Social Ads</div><div class="leg"><div class="leg-dot" style="background:#2D9D6A"></div>New SEO</div><div class="leg"><div class="leg-dot" style="background:#8B5CF6"></div>SEO Increase</div><div class="leg"><div class="leg-dot" style="background:#D4A017"></div>Leads Lift</div><div class="leg"><div class="leg-dot" style="background:#CBD5E0"></div>Other</div></div></div>
+    <div class="panel full"><div class="panel-title">SaaS Growth Type Mix by Coach &mdash; 100% of Dollars</div><svg id="c7" height="250"></svg><div class="legend"><div class="leg"><div class="leg-dot" style="background:#FF5000"></div>TL Increase</div><div class="leg"><div class="leg-dot" style="background:#E07B39"></div>New TL</div><div class="leg"><div class="leg-dot" style="background:#0F6B9E"></div>New Social Ads</div><div class="leg"><div class="leg-dot" style="background:#2D9D6A"></div>New SEO</div><div class="leg"><div class="leg-dot" style="background:#8B5CF6"></div>SEO Increase</div><div class="leg"><div class="leg-dot" style="background:#D4A017"></div>Leads Lift</div><div class="leg"><div class="leg-dot" style="background:#CBD5E0"></div>Other</div></div></div>
   </div>
 </div>
 
-<!-- QTD SUMMARY -->
 <div class="pane" id="pane-qtd">
   <div class="kpi-row">
     <div class="kpi"><div class="kpi-val" id="q-total">$287,505</div><div class="kpi-lbl">Total SaaS Growth <span class="qtd-label">Q2</span></div></div>
@@ -161,11 +159,10 @@ svg{display:block;width:100%}
   </div>
 </div>
 
-<!-- BY EMPLOYEE -->
 <div class="pane" id="pane-pcsm">
   <div class="selector-row">
     <label>Employee (PCSM)</label>
-    <select id="pcsmSel" onchange="renderPCSM()"><option value="">&#8212; Select Employee &#8212;</option></select>
+    <select id="pcsmSel" onchange="renderPCSM()"><option value="">-- Select Employee --</option></select>
     <label>Period</label>
     <div class="period-toggle">
       <button class="period-btn active" id="pPeriodYTD" onclick="setPcsmPeriod('ytd')">YTD</button>
@@ -175,11 +172,10 @@ svg{display:block;width:100%}
   <div id="pcsm-content"><div class="empty-state"><h3>Select an employee above</h3><p>Choose a PCSM to see their individual performance breakdown.</p></div></div>
 </div>
 
-<!-- BY COACH -->
 <div class="pane" id="pane-coach">
   <div class="selector-row">
     <label>Coach</label>
-    <select id="coachSel" onchange="renderCoach()"><option value="">&#8212; Select Coach &#8212;</option></select>
+    <select id="coachSel" onchange="renderCoach()"><option value="">-- Select Coach --</option></select>
     <label>Period</label>
     <div class="period-toggle">
       <button class="period-btn active" id="cPeriodYTD" onclick="setCoachPeriod('ytd')">YTD</button>
@@ -189,10 +185,8 @@ svg{display:block;width:100%}
   <div id="coach-content"><div class="empty-state"><h3>Select a coach above</h3><p>Choose a coach to see team-level metrics and PCSM rankings.</p></div></div>
 </div>
 
-<!-- KICKERS -->
 <div class="pane" id="pane-kickers"><div id="kickers-content"></div></div>
 
-<!-- UPLOAD LOG -->
 <div class="pane" id="pane-log">
   <div class="grid" style="grid-template-columns:1fr">
     <div class="panel full"><div class="panel-title">Upload History</div><div id="logTable"><div class="log-empty">No uploads yet.</div></div></div>
@@ -241,7 +235,6 @@ const QTD_STATIC={
 function calcKicker(q){return Math.max(0,q-3);}
 let DATA=[],UPLOAD_LOG=[],DATA_SOURCE='sample';
 function loadStorage(){try{const d=localStorage.getItem('saas_data_v2');if(d){DATA=JSON.parse(d);DATA_SOURCE='live';}const l=localStorage.getItem('saas_upload_log');if(l)UPLOAD_LOG=JSON.parse(l);}catch(e){}}
-
 function aggMonthly(rows){const m={};rows.forEach(r=>{const mo=r['Month Impacted']||'';if(!mo)return;if(!m[mo])m[mo]={d:0,o:0};m[mo].d+=Number(r['SaaS Growth'])||0;m[mo].o++;});return MONTH_ORDER.filter(mo=>m[mo]).map(mo=>{const sh=mo.replace(' 2026','');const p=mo==='Jun 2026';return{m:p?sh+'*':sh,d:m[mo].d,o:m[mo].o,partial:p};});}
 function aggByType(rows){const t={};rows.forEach(r=>{const tp=r['SaaS Growth Type']||'Other';if(!t[tp])t[tp]={d:0,o:0};t[tp].d+=Number(r['SaaS Growth'])||0;t[tp].o++;});return Object.entries(t).map(([type,v])=>({type,d:v.d,o:v.o,avg:v.o?Math.round(v.d/v.o):0})).sort((a,b)=>b.d-a.d).slice(0,8);}
 function aggByPCSM(rows){const m={};rows.forEach(r=>{const p=r['PCSM']||'?';if(!m[p])m[p]={d:0,o:0};m[p].d+=Number(r['SaaS Growth'])||0;m[p].o++;});return Object.entries(m).map(([name,v])=>({name,total:v.d,opps:v.o,avg:v.o?Math.round(v.d/v.o):0})).sort((a,b)=>b.total-a.total);}
@@ -319,7 +312,7 @@ function drawCoachGrouped(svgId,data){
   });
 }
 
-// Shows ALL employees — no cap. Height scales dynamically.
+// NO CAP — shows every employee. Height scales with data.
 function drawPCSMRanked(svgId,data,teamAvg){
   const el=document.getElementById(svgId);if(!el)return;el.replaceChildren();
   if(!data||!data.length){
@@ -470,7 +463,7 @@ function renderPCSM(){
   }
   const kickerTile=isQTD?`<div class="kpi kicker"><div class="kpi-val ${kickers===0?'zero':'kicker-val'}">${kickers}</div><div class="kpi-lbl kicker-lbl">Qualified Kickers</div><div class="kpi-sub kicker-sub">${kickers===0?'Need '+(4-Math.min(opps,3))+' more to qualify':'Above 3-opp threshold'}</div></div>`:'';
   const kpiGrid=isQTD?'kpi-row-5':'kpi-row';
-  cont.innerHTML=`<div class="${kpiGrid}"><div class="kpi"><div class="kpi-val">$${Math.round(total).toLocaleString()}</div><div class="kpi-lbl">Total SaaS Growth${isQTD?' <span class="qtd-label">Q2</span>':''}</div></div><div class="kpi"><div class="kpi-val">${opps}</div><div class="kpi-lbl">Opportunities${isQTD?' <span class="qtd-label">Q2</span>':''}</div></div><div class="kpi"><div class="kpi-val">$${avg.toLocaleString()}</div><div class="kpi-lbl">Avg Deal Size</div></div><div class="kpi"><div class="kpi-val">${baRate}</div><div class="kpi-lbl">BA Engagement Rate</div></div>${kickerTile}</div><div class="grid"><div class="panel" style="grid-column:1/-1"><div style="font-size:12px;color:#718096">Coach: <strong style="color:#0F1735">${coach}</strong> &nbsp;·&nbsp; Top Growth Type: <strong style="color:#FF5000">${topType}</strong></div></div><div class="panel full"><div class="panel-title">${isQTD?'QTD':'Monthly'} Growth &#8212; ${pcsm}</div><svg id="pc1" height="210"></svg></div><div class="panel"><div class="panel-title">Growth by Type</div><svg id="pc2" height="280"></svg></div><div class="panel"><div class="panel-title">Net New vs. Upgrades</div><svg id="pc6" height="280"></svg></div></div>`;
+  cont.innerHTML=`<div class="${kpiGrid}"><div class="kpi"><div class="kpi-val">$${Math.round(total).toLocaleString()}</div><div class="kpi-lbl">Total SaaS Growth${isQTD?' <span class="qtd-label">Q2</span>':''}</div></div><div class="kpi"><div class="kpi-val">${opps}</div><div class="kpi-lbl">Opportunities${isQTD?' <span class="qtd-label">Q2</span>':''}</div></div><div class="kpi"><div class="kpi-val">$${avg.toLocaleString()}</div><div class="kpi-lbl">Avg Deal Size</div></div><div class="kpi"><div class="kpi-val">${baRate}</div><div class="kpi-lbl">BA Engagement Rate</div></div>${kickerTile}</div><div class="grid"><div class="panel" style="grid-column:1/-1"><div style="font-size:12px;color:#718096">Coach: <strong style="color:#0F1735">${coach}</strong> &nbsp;&middot;&nbsp; Top Growth Type: <strong style="color:#FF5000">${topType}</strong></div></div><div class="panel full"><div class="panel-title">${isQTD?'QTD':'Monthly'} Growth &mdash; ${pcsm}</div><svg id="pc1" height="210"></svg></div><div class="panel"><div class="panel-title">Growth by Type</div><svg id="pc2" height="280"></svg></div><div class="panel"><div class="panel-title">Net New vs. Upgrades</div><svg id="pc6" height="280"></svg></div></div>`;
   requestAnimationFrame(()=>{drawMonthly('pc1',monthly);drawHBar('pc2',types,'type','d',ORANGE,true);drawNetNew('pc6',nn);});
 }
 
@@ -500,7 +493,7 @@ function renderCoach(){
     monthly=src.monthly.map(m=>({...m,d:Math.round(m.d*ratio),o:Math.max(1,Math.round(m.o*ratio))}));
     types=src.types.map(t=>({...t,d:Math.round(t.d*ratio)}));
   }
-  cont.innerHTML=`<div class="kpi-row"><div class="kpi"><div class="kpi-val">$${Math.round(total).toLocaleString()}</div><div class="kpi-lbl">Total SaaS Growth${isQTD?' <span class="qtd-label">Q2</span>':''}</div></div><div class="kpi"><div class="kpi-val">${opps}</div><div class="kpi-lbl">Opportunities${isQTD?' <span class="qtd-label">Q2</span>':''}</div></div><div class="kpi"><div class="kpi-val">$${avg.toLocaleString()}</div><div class="kpi-lbl">Avg Deal Size</div></div><div class="kpi"><div class="kpi-val">${pcsmCount}</div><div class="kpi-lbl">Active PCSMs</div></div></div><div class="grid"><div class="panel full"><div class="panel-title">${isQTD?'QTD':'Monthly'} Growth &#8212; ${coach} Team</div><svg id="cc1" height="210"></svg></div><div class="panel"><div class="panel-title">PCSM Rankings${isQTD?' <span class="qtd-label">Q2</span>':''}</div><svg id="cc2" height="310"></svg></div><div class="panel"><div class="panel-title">Growth by Type</div><svg id="cc3" height="310"></svg></div></div>`;
+  cont.innerHTML=`<div class="kpi-row"><div class="kpi"><div class="kpi-val">$${Math.round(total).toLocaleString()}</div><div class="kpi-lbl">Total SaaS Growth${isQTD?' <span class="qtd-label">Q2</span>':''}</div></div><div class="kpi"><div class="kpi-val">${opps}</div><div class="kpi-lbl">Opportunities${isQTD?' <span class="qtd-label">Q2</span>':''}</div></div><div class="kpi"><div class="kpi-val">$${avg.toLocaleString()}</div><div class="kpi-lbl">Avg Deal Size</div></div><div class="kpi"><div class="kpi-val">${pcsmCount}</div><div class="kpi-lbl">Active PCSMs</div></div></div><div class="grid"><div class="panel full"><div class="panel-title">${isQTD?'QTD':'Monthly'} Growth &mdash; ${coach} Team</div><svg id="cc1" height="210"></svg></div><div class="panel"><div class="panel-title">PCSM Rankings${isQTD?' <span class="qtd-label">Q2</span>':''}</div><svg id="cc2" height="310"></svg></div><div class="panel"><div class="panel-title">Growth by Type</div><svg id="cc3" height="310"></svg></div></div>`;
   requestAnimationFrame(()=>{drawMonthly('cc1',monthly);drawHBar('cc2',pcsms,'name','total',NAVY,false);drawHBar('cc3',types,'type','d',ORANGE,true);});
 }
 
@@ -508,22 +501,30 @@ function renderKickers(){
   const cont=document.getElementById('kickers-content');
   let kData;
   if(DATA_SOURCE==='live'&&DATA.length){
-    const qRows=DATA.filter(r=>r['Quarter']===CQ),byPCSM={};
-    qRows.forEach(r=>{const p=r['PCSM']||'?',c=r['Coach']||'?';if(!byPCSM[p])byPCSM[p]={coach:c,opps:0};byPCSM[p].opps++;});
-    kData=Object.entries(byPCSM).map(([name,v])=>({name,coach:v.coach,qtdOpps:v.opps,kickers:calcKicker(v.opps)})).sort((a,b)=>b.kickers-a.kickers||b.qtdOpps-a.qtdOpps);
+    // Build full roster from ALL data (not just Q2) so no one is excluded
+    const allPCSMs={};
+    DATA.forEach(r=>{const p=(r['PCSM']||'').trim(),c=(r['Coach']||'').trim();if(p&&!allPCSMs[p])allPCSMs[p]={coach:c,opps:0};});
+    // Count Q2 opps per PCSM
+    DATA.filter(r=>r['Quarter']===CQ).forEach(r=>{const p=(r['PCSM']||'').trim();if(allPCSMs[p])allPCSMs[p].opps++;});
+    kData=Object.entries(allPCSMs).map(([name,v])=>({name,coach:v.coach,qtdOpps:v.opps,kickers:calcKicker(v.opps),noActivity:v.opps===0})).sort((a,b)=>b.kickers-a.kickers||b.qtdOpps-a.qtdOpps);
   } else {
     const coachMap={'Summer Rima':'Dexter Tardy','Chyna Elias':'Shannon Comas','Holly Koehn':'Julia Cowden','David Ostendorf':'Dexter Tardy','Lorenz Marsh':'Dexter Tardy','Niurkiss M. Burgos':'Julia Cowden','Keyla F. Solano':'Julia Cowden','Sydney Pacheco':'Shannon Comas','Scott Jennings':'Dexter Tardy','Maria R. Matos':'Shannon Comas','Jason Hockett':'Julia Cowden','Madison McCaskey':'Shannon Comas','Jonathan Miles':'Carla Miner-L.','Jaclyn Allen':'Julian Komimbin',"La'Donna Williams":'Julia Cowden'};
-    kData=QTD_STATIC.pcsms.map(p=>({name:p.name,coach:coachMap[p.name]||'--',qtdOpps:p.opps,kickers:calcKicker(p.opps)})).sort((a,b)=>b.kickers-a.kickers||b.qtdOpps-a.qtdOpps);
+    kData=QTD_STATIC.pcsms.map(p=>({name:p.name,coach:coachMap[p.name]||'--',qtdOpps:p.opps,kickers:calcKicker(p.opps),noActivity:false})).sort((a,b)=>b.kickers-a.kickers||b.qtdOpps-a.qtdOpps);
   }
-  const totalKickers=kData.reduce((s,d)=>s+d.kickers,0),qualified=kData.filter(d=>d.kickers>0).length;
-  const rows=kData.map((d,i)=>`<tr><td><strong>${i+1}</strong></td><td><strong style="color:#0F1735">${d.name}</strong></td><td style="color:#718096">${d.coach}</td><td style="text-align:center">${d.qtdOpps}</td><td style="text-align:center">${d.qtdOpps>=3?'<span style="color:#2D9D6A;font-weight:700">&#10003; Qualified</span>':'<span style="color:#A0AEC0">'+d.qtdOpps+' / 3</span>'}</td><td style="text-align:center">${d.kickers>0?'<span class="badge-kicker">'+d.kickers+'</span>':'<span class="badge-zero">0</span>'}</td></tr>`).join('');
-  cont.innerHTML=`<div class="kpi-row" style="grid-template-columns:repeat(3,1fr)"><div class="kpi"><div class="kpi-val">${totalKickers}</div><div class="kpi-lbl">Total Team Kickers <span class="qtd-label">${CQ}</span></div></div><div class="kpi"><div class="kpi-val">${qualified}</div><div class="kpi-lbl">Employees Qualified <span class="qtd-label">${CQ}</span></div></div><div class="kpi"><div class="kpi-val">${kData.length-qualified}</div><div class="kpi-lbl">Working Toward Threshold</div></div></div><div class="grid" style="grid-template-columns:1fr"><div class="panel full"><div class="panel-title">Kicker Tracker &#8212; ${CQ}</div><div class="panel-sub">Employees earn a kicker for each growth above the 3-opportunity quarterly threshold.</div><table class="log-table"><thead><tr><th>#</th><th>Employee</th><th>Coach</th><th style="text-align:center">QTD Opps</th><th style="text-align:center">Threshold (3)</th><th style="text-align:center">Kickers Earned</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  const totalKickers=kData.reduce((s,d)=>s+d.kickers,0),qualified=kData.filter(d=>d.kickers>0).length,noActivity=kData.filter(d=>d.noActivity).length;
+  const thresholdCell=d=>{
+    if(d.noActivity)return'<span style="color:#A0AEC0;font-style:italic">No Q2 activity</span>';
+    if(d.qtdOpps>=3)return'<span style="color:#2D9D6A;font-weight:700">&#10003; Qualified</span>';
+    return'<span style="color:#A0AEC0">'+d.qtdOpps+' / 3</span>';
+  };
+  const rows=kData.map((d,i)=>`<tr style="${d.noActivity?'opacity:.55':''}"><td><strong>${i+1}</strong></td><td><strong style="color:#0F1735">${d.name}</strong></td><td style="color:#718096">${d.coach}</td><td style="text-align:center">${d.noActivity?'<span style="color:#A0AEC0">0</span>':d.qtdOpps}</td><td style="text-align:center">${thresholdCell(d)}</td><td style="text-align:center">${d.kickers>0?'<span class="badge-kicker">'+d.kickers+'</span>':'<span class="badge-zero">0</span>'}</td></tr>`).join('');
+  cont.innerHTML=`<div class="kpi-row" style="grid-template-columns:repeat(4,1fr)"><div class="kpi"><div class="kpi-val">${totalKickers}</div><div class="kpi-lbl">Total Team Kickers <span class="qtd-label">${CQ}</span></div></div><div class="kpi"><div class="kpi-val">${qualified}</div><div class="kpi-lbl">Employees Qualified <span class="qtd-label">${CQ}</span></div></div><div class="kpi"><div class="kpi-val">${kData.length-qualified-noActivity}</div><div class="kpi-lbl">Working Toward Threshold</div></div><div class="kpi"><div class="kpi-val" style="color:#A0AEC0">${noActivity}</div><div class="kpi-lbl">No Q2 Activity</div><div class="kpi-sub">Active in Q1, no Q2 entries yet</div></div></div><div class="grid" style="grid-template-columns:1fr"><div class="panel full"><div class="panel-title">Kicker Tracker &mdash; ${CQ}</div><div class="panel-sub">All ${kData.length} employees shown. Employees earn a kicker for each growth above the 3-opportunity quarterly threshold. Grayed rows had Q1 activity but no Q2 entries yet.</div><table class="log-table"><thead><tr><th>#</th><th>Employee</th><th>Coach</th><th style="text-align:center">QTD Opps</th><th style="text-align:center">Threshold (3)</th><th style="text-align:center">Kickers Earned</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 
 function renderLog(){
   const mini=document.getElementById('logMini'),full=document.getElementById('logTable');
   if(!UPLOAD_LOG.length){if(mini)mini.innerHTML='<span class="no-log">No uploads yet</span>';if(full)full.innerHTML='<div class="log-empty">No uploads yet.</div>';return;}
-  if(mini)mini.innerHTML=UPLOAD_LOG.slice(0,3).map(e=>`<div class="log-entry"><strong>${e.filename}</strong><br>${e.rows} rows · ${new Date(e.uploadedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>`).join('');
+  if(mini)mini.innerHTML=UPLOAD_LOG.slice(0,3).map(e=>`<div class="log-entry"><strong>${e.filename}</strong><br>${e.rows} rows &middot; ${new Date(e.uploadedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>`).join('');
   if(full)full.innerHTML=`<table class="log-table"><thead><tr><th>#</th><th>File</th><th>Rows</th><th>Uploaded At</th></tr></thead><tbody>${UPLOAD_LOG.map((e,i)=>`<tr><td>${i+1}</td><td>${e.filename}</td><td><span class="badge-rows">${e.rows.toLocaleString()}</span></td><td>${new Date(e.uploadedAt).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})}</td></tr>`).join('')}</tbody></table>`;
 }
 
