@@ -471,6 +471,8 @@ function populateCoachDropdown(){const sel=document.getElementById('coachSel');c
 
 function fmtDate(v){
   if(!v)return '—';
+  const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m)return parseInt(m[2])+'/'+parseInt(m[3])+'/'+m[1];
   const d=new Date(v);
   if(isNaN(d.getTime()))return String(v);
   return (d.getMonth()+1)+'/'+(d.getDate())+'/'+d.getFullYear();
