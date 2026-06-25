@@ -236,6 +236,33 @@ function calcQtdPayout(pcsm,quarter){
   const qRows=DATA.filter(r=>(r['PCSM']||'').trim()===pcsm&&r['Quarter']===quarter);
   return qRows.reduce((sum,r,i)=>sum+(i>=3?getKickerRate(r['SaaS Growth Type'],Number(r['SaaS Growth'])||0):0),0);
 }
+function buildGrowthLog(rows){
+  // Sort rows by month order
+  const sorted=[...rows].sort((a,b)=>{
+    const ai=MONTH_ORDER.indexOf(a['Month Impacted']),bi=MONTH_ORDER.indexOf(b['Month Impacted']);
+    return(ai===-1?99:ai)-(bi===-1?99:bi);
+  });
+  // Track per-quarter position for threshold calculation
+  const qSeq={};
+  return sorted.map(r=>{
+    const q=(r['Quarter']||'').trim();
+    if(!qSeq[q])qSeq[q]=0;
+    qSeq[q]++;
+    const seq=qSeq[q];
+    const gt=(r['SaaS Growth Type']||'').trim();
+    const amt=Number(r['SaaS Growth'])||0;
+    let statusLabel,statusColor,payout;
+    if(seq<=3){
+      statusLabel=`${seq}/3 &mdash; ${4-seq} more to qualify`;
+      statusColor='#A0AEC0';payout=0;
+    }else{
+      statusLabel=`Kicker #${seq-3}`;
+      statusColor='#2D9D6A';
+      payout=getKickerRate(gt,amt);
+    }
+    return{seq,q,month:r['Month Impacted']||'&mdash;',account:(r['Account name']||'').trim(),gt,amt,statusLabel,statusColor,payout,isKicker:seq>3};
+  });
+}
 function svgEl(id){return document.getElementById(id);}
 function svgW(id){const el=svgEl(id);if(!el)return 600;const w=el.parentElement.getBoundingClientRect().width-44;return w>80?w:600;}
 function s(tag,a,par){const e=document.createElementNS(NS,tag);for(const[k,v]of Object.entries(a))e.setAttribute(k,v);if(par)par.appendChild(e);return e;}
@@ -476,7 +503,20 @@ function renderPCSM(){
   const kPayout=isQTD?calcQtdPayout(pcsm,CQ):0;
   const kTile=isQTD?`<div class="kpi kicker-tile"><div class="kpi-val ${kickers===0?'zero':''}">${kickers}</div><div class="kpi-lbl kl">Kickers Earned</div><div class="kpi-sub ks">${kickers===0?'Need '+(4-Math.min(opps,3))+' more opps':'Above threshold'}</div></div><div class="kpi" style="background:#F0FFF8;border:1.5px solid #C6F6D5"><div class="kpi-val" style="color:#2D9D6A">${kPayout>0?'$'+kPayout.toLocaleString():'$0'}</div><div class="kpi-lbl">QTD Kicker Payout</div><div class="kpi-sub">${kPayout>0?'Qualifying growth types':'No qualifying growth types yet'}</div></div>`:'';
   const grid=isQTD?'kpi-row-6':'kpi-row';
-  cont.innerHTML=`<div class="${grid}"><div class="kpi"><div class="kpi-val">$${Math.round(total).toLocaleString()}</div><div class="kpi-lbl">Total Growth${isQTD?` <span class="qtd-label">${CQ}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">${opps}</div><div class="kpi-lbl">Opportunities${isQTD?` <span class="qtd-label">${CQ}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">$${avg.toLocaleString()}</div><div class="kpi-lbl">Avg Deal Size</div></div><div class="kpi"><div class="kpi-val">${baRate}</div><div class="kpi-lbl">BA Rate</div></div>${kTile}</div><div class="grid"><div class="panel full"><div style="font-size:12px;color:#718096">Coach: <strong style="color:#0F1735">${coach}</strong>&nbsp;&nbsp;·&nbsp;&nbsp;Top Type: <strong style="color:#FF5000">${ta[0]?.type||'--'}</strong></div></div><div class="panel full"><div class="panel-title">${isQTD?CQ+' ':''}Monthly Growth — ${pcsm}</div><svg id="pc1" height="210"></svg></div><div class="panel"><div class="panel-title">Growth by Type</div><svg id="pc2" height="280"></svg></div><div class="panel"><div class="panel-title">Net New vs. Upgrades</div><svg id="pc6" height="280"></svg></div></div>`;
+  // Build growth log table
+  const log=buildGrowthLog(rows);
+  const logTotalPayout=log.reduce((s,r)=>s+r.payout,0);
+  const qTh=!isQTD?'<th>Quarter</th>':'';
+  const logTbody=log.map((r,i)=>{
+    const rowBg=r.isKicker&&r.payout>0?'background:#F8FFFC':'';
+    const qTd=!isQTD?`<td style="font-size:11px;color:#A0AEC0">${r.q}</td>`:'';
+    const payClr=r.payout>0?'#2D9D6A':r.isKicker?'#A0AEC0':'#E2E8F0';
+    const payTxt=r.payout>0?'$'+r.payout.toLocaleString():r.isKicker?'$0':'&mdash;';
+    return`<tr style="${rowBg}"><td style="color:#A0AEC0;font-size:11px;text-align:center">${i+1}</td><td style="font-size:12px;color:#718096">${r.month}</td>${qTd}<td style="font-size:12px;color:#718096">${r.account||'&mdash;'}</td><td style="font-size:12px;color:#0F1735">${r.gt||'&mdash;'}</td><td style="font-size:12px;font-weight:600;text-align:right;color:#0F1735">$${r.amt.toLocaleString()}</td><td style="text-align:center"><span style="font-size:11px;font-weight:600;color:${r.statusColor}">${r.statusLabel}</span></td><td style="text-align:right;font-weight:700;font-size:12px;color:${payClr}">${payTxt}</td></tr>`;
+  }).join('');
+  const logFoot=logTotalPayout>0?`<tfoot><tr style="background:#F5F7FA"><td colspan="${isQTD?6:7}" style="text-align:right;font-size:12px;font-weight:700;color:#718096;padding:10px 14px">Total Kicker Payout</td><td style="text-align:right;font-weight:700;color:#2D9D6A;padding:10px 14px">$${logTotalPayout.toLocaleString()}</td></tr></tfoot>`:'';
+  const logSection=`<div class="grid" style="grid-template-columns:1fr"><div class="panel full"><div class="panel-title">Growth Detail &mdash; ${isQTD?CQ:'YTD'}</div><div class="panel-sub">Every growth in order. Kicker payout applies to qualifying types (TL, SEO, Leads Lift, New MC, Social Ads) starting at the 4th opp each quarter.</div><table class="log-table"><thead><tr><th style="text-align:center">#</th><th>Month</th>${!isQTD?'<th>Quarter</th>':''}<th>Account</th><th>Growth Type</th><th style="text-align:right">Amount</th><th style="text-align:center">Threshold Status</th><th style="text-align:right">Kicker Payout</th></tr></thead><tbody>${logTbody}</tbody>${logFoot}</table></div></div>`;
+  cont.innerHTML=`<div class="${grid}"><div class="kpi"><div class="kpi-val">$${Math.round(total).toLocaleString()}</div><div class="kpi-lbl">Total Growth${isQTD?` <span class="qtd-label">${CQ}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">${opps}</div><div class="kpi-lbl">Opportunities${isQTD?` <span class="qtd-label">${CQ}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">$${avg.toLocaleString()}</div><div class="kpi-lbl">Avg Deal Size</div></div><div class="kpi"><div class="kpi-val">${baRate}</div><div class="kpi-lbl">BA Rate</div></div>${kTile}</div><div class="grid"><div class="panel full"><div style="font-size:12px;color:#718096">Coach: <strong style="color:#0F1735">${coach}</strong>&nbsp;&nbsp;·&nbsp;&nbsp;Top Type: <strong style="color:#FF5000">${ta[0]?.type||'--'}</strong></div></div><div class="panel full"><div class="panel-title">${isQTD?CQ+' ':''}Monthly Growth &mdash; ${pcsm}</div><svg id="pc1" height="210"></svg></div><div class="panel"><div class="panel-title">Growth by Type</div><svg id="pc2" height="280"></svg></div><div class="panel"><div class="panel-title">Net New vs. Upgrades</div><svg id="pc6" height="280"></svg></div></div>${logSection}`;
   requestAnimationFrame(()=>{drawMonthly('pc1',aggMonthly(rows));drawHBar('pc2',ta,'type','d',ORANGE,true);drawNN('pc6',aggNN(rows));});
 }
 
