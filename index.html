@@ -181,6 +181,8 @@ svg{display:block;width:100%}
       <button class="period-btn active" id="pPeriodYTD" onclick="setPcsmPeriod('ytd')">YTD</button>
       <button class="period-btn" id="pPeriodQTD" onclick="setPcsmPeriod('qtd')">QTD</button>
     </div>
+    <label>Quarter</label>
+    <select id="pcsmQtrSel" onchange="setPCSMQtr(this.value)" style="font-size:13px;font-weight:600;color:#0F1735;border:1.5px solid #E2E8F0;border-radius:6px;padding:6px 12px;background:white;cursor:pointer;outline:none;min-width:110px"></select>
   </div>
   <div id="pcsm-content"><div class="empty-state"><h3>Select an employee above</h3><p>Choose a PCSM to see their individual performance breakdown.</p></div></div>
 </div>
@@ -194,11 +196,13 @@ svg{display:block;width:100%}
       <button class="period-btn active" id="cPeriodYTD" onclick="setCoachPeriod('ytd')">YTD</button>
       <button class="period-btn" id="cPeriodQTD" onclick="setCoachPeriod('qtd')">QTD</button>
     </div>
+    <label>Quarter</label>
+    <select id="coachQtrSel" onchange="setCoachQtr(this.value)" style="font-size:13px;font-weight:600;color:#0F1735;border:1.5px solid #E2E8F0;border-radius:6px;padding:6px 12px;background:white;cursor:pointer;outline:none;min-width:110px"></select>
   </div>
   <div id="coach-content"><div class="empty-state"><h3>Select a coach above</h3></div></div>
 </div>
 
-<div class="pane" id="pane-kickers"><div id="kickers-content"></div></div>
+<div class="pane" id="pane-kickers"><div style="display:flex;align-items:center;gap:12px;padding:18px 36px 0"><label style="font-size:12px;font-weight:700;color:#0F1735;letter-spacing:.5px;text-transform:uppercase">Quarter</label><select id="kickersQtrSel" onchange="setKickersQtr(this.value)" style="font-size:13px;font-weight:600;color:#0F1735;border:1.5px solid #E2E8F0;border-radius:6px;padding:6px 12px;background:white;cursor:pointer;outline:none;min-width:110px"></select></div><div id="kickers-content"></div></div>
 
 <div class="pane" id="pane-log">
   <div class="grid" style="grid-template-columns:1fr">
@@ -230,9 +234,23 @@ function populateQTDDropdown(){
   if(!quarters.includes(selectedQTD)&&quarters.length){selectedQTD=quarters[quarters.length-1];sel.value=selectedQTD;}
 }
 let pcsmPeriod='ytd',coachPeriod='ytd',DATA=[],DATA_SOURCE='loading',DATA_TS=null;
+let selectedPCSMQtr=null,selectedCoachQtr=null,selectedKickersQtr=null;
 
 function setPcsmPeriod(p){pcsmPeriod=p;document.getElementById('pPeriodYTD').classList.toggle('active',p==='ytd');document.getElementById('pPeriodQTD').classList.toggle('active',p==='qtd');renderPCSM();}
 function setCoachPeriod(p){coachPeriod=p;document.getElementById('cPeriodYTD').classList.toggle('active',p==='ytd');document.getElementById('cPeriodQTD').classList.toggle('active',p==='qtd');renderCoach();}
+
+function getAvailableQuarters(){return[...new Set(DATA.map(r=>(r['Quarter']||'').trim()).filter(Boolean))].sort();}
+function populateTabQtrDropdown(selId,stateVar,setter){
+  const sel=document.getElementById(selId);if(!sel)return;
+  const quarters=getAvailableQuarters();
+  const cur=stateVar||quarters[quarters.length-1]||CQ;
+  sel.innerHTML='';
+  quarters.forEach(q=>{const o=new Option(q,q);if(q===cur)o.selected=true;sel.add(o);});
+  setter(sel.value);
+}
+function setPCSMQtr(q){selectedPCSMQtr=q;renderPCSM();}
+function setCoachQtr(q){selectedCoachQtr=q;renderCoach();}
+function setKickersQtr(q){selectedKickersQtr=q;renderKickers();}
 function calcKicker(q){return Math.max(0,q-3);}
 // Kicker payout rules (confirmed): TL / SEO (not Keyword Add On) / Leads Lift / New MC = tiered.
 // New Thryv Social Ads & Thryv Social Ads Increase = $25 flat. All others = $0.
@@ -532,14 +550,14 @@ function buildGrowthLog(rows){
 function renderPCSM(){
   const pcsm=document.getElementById('pcsmSel').value,cont=document.getElementById('pcsm-content'),isQTD=pcsmPeriod==='qtd';
   if(!pcsm){cont.innerHTML='<div class="empty-state"><h3>Select an employee above</h3></div>';return;}
-  const allR=DATA.filter(r=>r['PCSM']===pcsm),rows=isQTD?allR.filter(r=>r['Quarter']===CQ):allR;
+  const qtr=selectedPCSMQtr||CQ;const allR=DATA.filter(r=>r['PCSM']===pcsm),rows=isQTD?allR.filter(r=>r['Quarter']===qtr):allR;
   const total=rows.reduce((s,r)=>s+(Number(r['SaaS Growth'])||0),0),opps=rows.length,avg=opps?Math.round(total/opps):0;
   const ta=aggType(rows),coach=allR[0]?.['Coach']||'--';
   const br=rows.filter(r=>{const b=(r['Was the BA on Recommendation Call']||'').toLowerCase();return b==='yes'||b.includes('recommendation');});
   const baRate=opps?((br.length/opps)*100).toFixed(0)+'%':'--';
   const kickers=isQTD?calcKicker(opps):null;
-  const kPayout=isQTD?calcQtdPayout(pcsm,CQ):0;
-  const kTile=isQTD?`<div class="kpi kicker-tile"><div class="kpi-val ${kickers===0?'zero':''}">${kickers}</div><div class="kpi-lbl kl">Kickers Earned</div><div class="kpi-sub ks">${kickers===0?'Need '+(4-Math.min(opps,3))+' more opps':'Above threshold'}</div></div><div class="kpi" style="background:#F0FFF8;border:1.5px solid #C6F6D5"><div class="kpi-val" style="color:#2D9D6A">${kPayout>0?'$'+kPayout.toLocaleString():'$0'}</div><div class="kpi-lbl">QTD Kicker Payout</div><div class="kpi-sub">${kPayout>0?'Qualifying growth types':'No qualifying growth types yet'}</div></div>`:'';
+  const kPayout=isQTD?calcQtdPayout(pcsm,qtr):0;
+  const kTile=isQTD?`<div class="kpi kicker-tile"><div class="kpi-val ${kickers===0?'zero':''}">${kickers}</div><div class="kpi-lbl kl">Kickers Earned <span class="qtd-label">${qtr}</span></div><div class="kpi-sub ks">${kickers===0?'Need '+(4-Math.min(opps,3))+' more opps':'Above threshold'}</div></div><div class="kpi" style="background:#F0FFF8;border:1.5px solid #C6F6D5"><div class="kpi-val" style="color:#2D9D6A">${kPayout>0?'$'+kPayout.toLocaleString():'$0'}</div><div class="kpi-lbl">Kicker Payout <span class="qtd-label">${qtr}</span></div><div class="kpi-sub">${kPayout>0?'Qualifying growth types':'No qualifying growth types yet'}</div></div>`:'';
   const grid=isQTD?'kpi-row-6':'kpi-row';
   const log=buildGrowthLog(rows);
   const logTotalPayout=log.reduce((s,r)=>s+r.payout,0);
@@ -552,18 +570,18 @@ function renderPCSM(){
   }).join('');
   const logCols=isQTD?6:7;
   const logFoot=logTotalPayout>0?`<tfoot><tr style="background:#F5F7FA"><td colspan="${logCols}" style="text-align:right;font-size:12px;font-weight:700;color:#718096;padding:10px 14px">Total Kicker Payout</td><td style="text-align:right;font-weight:700;color:#2D9D6A;padding:10px 14px">$${logTotalPayout.toLocaleString()}</td></tr></tfoot>`:'';
-  const logSection=`<div class="grid" style="grid-template-columns:1fr"><div class="panel full"><div class="panel-title">Growth Detail — ${isQTD?CQ:'YTD'}</div><div class="panel-sub">Every growth in order by date. The 3 lowest-dollar amounts each quarter are the threshold (no payout). All others earn a kicker for qualifying types.</div><table class="log-table"><thead><tr><th style="text-align:center">#</th><th>Date</th>${!isQTD?'<th>Quarter</th>':''}<th>Account</th><th>Growth Type</th><th style="text-align:right">Amount</th><th style="text-align:center">Threshold Status</th><th style="text-align:right">Kicker Payout</th></tr></thead><tbody>${logTbody}</tbody>${logFoot}</table></div></div>`;
-  cont.innerHTML=`<div class="${grid}"><div class="kpi"><div class="kpi-val">$${Math.round(total).toLocaleString()}</div><div class="kpi-lbl">Total Growth${isQTD?` <span class="qtd-label">${CQ}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">${opps}</div><div class="kpi-lbl">Opportunities${isQTD?` <span class="qtd-label">${CQ}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">$${avg.toLocaleString()}</div><div class="kpi-lbl">Avg Deal Size</div></div><div class="kpi"><div class="kpi-val">${baRate}</div><div class="kpi-lbl">BA Rate</div></div>${kTile}</div><div class="grid"><div class="panel full"><div style="font-size:12px;color:#718096">Coach: <strong style="color:#0F1735">${coach}</strong>&nbsp;&nbsp;\xb7&nbsp;&nbsp;Top Type: <strong style="color:#FF5000">${ta[0]?.type||'--'}</strong></div></div><div class="panel full"><div class="panel-title">${isQTD?CQ+' ':''}Monthly Growth — ${pcsm}</div><svg id="pc1" height="210"></svg></div><div class="panel"><div class="panel-title">Growth by Type</div><svg id="pc2" height="280"></svg></div><div class="panel"><div class="panel-title">Net New vs. Upgrades</div><svg id="pc6" height="280"></svg></div></div>${logSection}`;
+  const logSection=`<div class="grid" style="grid-template-columns:1fr"><div class="panel full"><div class="panel-title">Growth Detail — ${isQTD?qtr:'YTD'}</div><div class="panel-sub">Every growth in order by date. The 3 lowest-dollar amounts each quarter are the threshold (no payout). All others earn a kicker for qualifying types.</div><table class="log-table"><thead><tr><th style="text-align:center">#</th><th>Date</th>${!isQTD?'<th>Quarter</th>':''}<th>Account</th><th>Growth Type</th><th style="text-align:right">Amount</th><th style="text-align:center">Threshold Status</th><th style="text-align:right">Kicker Payout</th></tr></thead><tbody>${logTbody}</tbody>${logFoot}</table></div></div>`;
+  cont.innerHTML=`<div class="${grid}"><div class="kpi"><div class="kpi-val">$${Math.round(total).toLocaleString()}</div><div class="kpi-lbl">Total Growth${isQTD?` <span class="qtd-label">${qtr}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">${opps}</div><div class="kpi-lbl">Opportunities${isQTD?` <span class="qtd-label">${qtr}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">$${avg.toLocaleString()}</div><div class="kpi-lbl">Avg Deal Size</div></div><div class="kpi"><div class="kpi-val">${baRate}</div><div class="kpi-lbl">BA Rate</div></div>${kTile}</div><div class="grid"><div class="panel full"><div style="font-size:12px;color:#718096">Coach: <strong style="color:#0F1735">${coach}</strong>&nbsp;&nbsp;\xb7&nbsp;&nbsp;Top Type: <strong style="color:#FF5000">${ta[0]?.type||'--'}</strong></div></div><div class="panel full"><div class="panel-title">${isQTD?qtr+' ':''}Monthly Growth — ${pcsm}</div><svg id="pc1" height="210"></svg></div><div class="panel"><div class="panel-title">Growth by Type</div><svg id="pc2" height="280"></svg></div><div class="panel"><div class="panel-title">Net New vs. Upgrades</div><svg id="pc6" height="280"></svg></div></div>${logSection}`;
   requestAnimationFrame(()=>{drawMonthly('pc1',aggMonthly(rows));drawHBar('pc2',ta,'type','d',ORANGE,true);drawNN('pc6',aggNN(rows));});
 }
 
 function renderCoach(){
   const coach=document.getElementById('coachSel').value,cont=document.getElementById('coach-content'),isQTD=coachPeriod==='qtd';
   if(!coach){cont.innerHTML='<div class="empty-state"><h3>Select a coach above</h3></div>';return;}
-  const allR=DATA.filter(r=>r['Coach']===coach),rows=isQTD?allR.filter(r=>r['Quarter']===CQ):allR;
+  const cqtr=selectedCoachQtr||CQ;const allR=DATA.filter(r=>r['Coach']===coach),rows=isQTD?allR.filter(r=>r['Quarter']===cqtr):allR;
   const total=rows.reduce((s,r)=>s+(Number(r['SaaS Growth'])||0),0),opps=rows.length,avg=opps?Math.round(total/opps):0;
   const pcsms=aggPCSM(rows),pcsmCount=[...new Set(allR.map(r=>r['PCSM']))].length;
-  cont.innerHTML=`<div class="kpi-row"><div class="kpi"><div class="kpi-val">$${Math.round(total).toLocaleString()}</div><div class="kpi-lbl">Total Growth${isQTD?` <span class="qtd-label">${CQ}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">${opps}</div><div class="kpi-lbl">Opportunities${isQTD?` <span class="qtd-label">${CQ}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">$${avg.toLocaleString()}</div><div class="kpi-lbl">Avg Deal Size</div></div><div class="kpi"><div class="kpi-val">${pcsmCount}</div><div class="kpi-lbl">Active PCSMs</div></div></div><div class="grid"><div class="panel full"><div class="panel-title">${isQTD?CQ+' ':''}Monthly Growth — ${coach} Team</div><svg id="cc1" height="210"></svg></div><div class="panel"><div class="panel-title">PCSM Rankings${isQTD?` <span class="qtd-label">${CQ}</span>`:''}</div><svg id="cc2" height="310"></svg></div><div class="panel"><div class="panel-title">Growth by Type</div><svg id="cc3" height="310"></svg></div></div>`;
+  cont.innerHTML=`<div class="kpi-row"><div class="kpi"><div class="kpi-val">$${Math.round(total).toLocaleString()}</div><div class="kpi-lbl">Total Growth${isQTD?` <span class="qtd-label">${qtr}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">${opps}</div><div class="kpi-lbl">Opportunities${isQTD?` <span class="qtd-label">${qtr}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">$${avg.toLocaleString()}</div><div class="kpi-lbl">Avg Deal Size</div></div><div class="kpi"><div class="kpi-val">${pcsmCount}</div><div class="kpi-lbl">Active PCSMs</div></div></div><div class="grid"><div class="panel full"><div class="panel-title">${isQTD?cqtr+' ':''}Monthly Growth — ${coach} Team</div><svg id="cc1" height="210"></svg></div><div class="panel"><div class="panel-title">PCSM Rankings${isQTD?` <span class="qtd-label">${cqtr}</span>`:''}</div><svg id="cc2" height="310"></svg></div><div class="panel"><div class="panel-title">Growth by Type</div><svg id="cc3" height="310"></svg></div></div>`;
   requestAnimationFrame(()=>{drawMonthly('cc1',aggMonthly(rows));drawHBar('cc2',pcsms,'name','total',NAVY,false);drawHBar('cc3',aggType(rows),'type','d',ORANGE,true);});
 }
 
@@ -572,9 +590,9 @@ function renderKickers(){
   if(!DATA.length){cont.innerHTML='<div class="empty-state"><h3>No data loaded</h3></div>';return;}
   const allP={};
   DATA.forEach(r=>{const p=(r['PCSM']||'').trim(),c=(r['Coach']||'').trim();if(p&&!allP[p])allP[p]={coach:c,opps:0};});
-  DATA.filter(r=>r['Quarter']===CQ).forEach(r=>{const p=(r['PCSM']||'').trim();if(allP[p])allP[p].opps++;});
+  const kqtr=selectedKickersQtr||CQ;DATA.filter(r=>r['Quarter']===kqtr).forEach(r=>{const p=(r['PCSM']||'').trim();if(allP[p])allP[p].opps++;});
   const kData=Object.entries(allP).map(([name,v])=>{
-    const payout=calcQtdPayout(name,CQ);
+    const payout=calcQtdPayout(name,kqtr);
     return{name,coach:v.coach,opps:v.opps,kickers:calcKicker(v.opps),payout,noQ2:v.opps===0};
   }).sort((a,b)=>b.kickers-a.kickers||b.opps-a.opps);
   const totalK=kData.reduce((s,d)=>s+d.kickers,0);
@@ -588,16 +606,16 @@ function renderKickers(){
   };
   const trows=kData.map((d,i)=>`<tr style="${d.noQ2?'opacity:.5':''}"><td><strong>${i+1}</strong></td><td><strong style="color:#0F1735">${d.name}</strong></td><td style="color:#718096">${d.coach}</td><td style="text-align:center">${d.noQ2?'<span style="color:#A0AEC0">0</span>':d.opps}</td><td style="text-align:center">${tc(d)}</td><td style="text-align:center">${d.kickers>0?'<span class="badge-kicker">'+d.kickers+'</span>':'<span class="badge-zero">0</span>'}</td><td style="text-align:center;font-weight:700;color:${d.payout>0?'#2D9D6A':'#A0AEC0'}">${d.payout>0?'$'+d.payout.toLocaleString():'&mdash;'}</td></tr>`).join('');
   cont.innerHTML=`<div class="kpi-row-5">
-    <div class="kpi"><div class="kpi-val">${totalK}</div><div class="kpi-lbl">Total Team Kickers <span class="qtd-label">${CQ}</span></div></div>
-    <div class="kpi"><div class="kpi-val">${qualified}</div><div class="kpi-lbl">Employees Qualified <span class="qtd-label">${CQ}</span></div></div>
+    <div class="kpi"><div class="kpi-val">${totalK}</div><div class="kpi-lbl">Total Team Kickers <span class="qtd-label">${kqtr}</span></div></div>
+    <div class="kpi"><div class="kpi-val">${qualified}</div><div class="kpi-lbl">Employees Qualified <span class="qtd-label">${kqtr}</span></div></div>
     <div class="kpi"><div class="kpi-val">${kData.length-qualified-noQ2}</div><div class="kpi-lbl">Working Toward Threshold</div></div>
     <div class="kpi"><div class="kpi-val muted">${noQ2}</div><div class="kpi-lbl">No Q2 Activity</div><div class="kpi-sub">Active in Q1 — no Q2 entries yet</div></div>
-    <div class="kpi" style="background:#F0FFF8;border:1.5px solid #C6F6D5"><div class="kpi-val" style="color:#2D9D6A">$${totalPayout.toLocaleString()}</div><div class="kpi-lbl">Total Team Payout <span class="qtd-label">${CQ}</span></div><div class="kpi-sub">Qualifying growth types above threshold</div></div>
+    <div class="kpi" style="background:#F0FFF8;border:1.5px solid #C6F6D5"><div class="kpi-val" style="color:#2D9D6A">$${totalPayout.toLocaleString()}</div><div class="kpi-lbl">Total Team Payout <span class="qtd-label">${kqtr}</span></div><div class="kpi-sub">Qualifying growth types above threshold</div></div>
   </div>
   <div class="grid" style="grid-template-columns:1fr">
     <div class="panel full">
-      <div class="panel-title">Kicker Tracker &mdash; ${CQ}</div>
-      <div class="panel-sub">All ${kData.length} employees shown. Kickers are earned for each growth opportunity above the 3-opp quarterly threshold. Payout applies to qualifying growth types (TL, SEO, Leads Lift, New MC, Social Ads) starting at the 4th opp. Grayed rows had Q1 activity but no Q2 entries yet.</div>
+      <div class="panel-title">Kicker Tracker &mdash; ${kqtr}</div>
+      <div class="panel-sub">All ${kData.length} employees shown. Kickers are earned for each growth opportunity above the 3-opp quarterly threshold. Payout applies to qualifying growth types (TL, SEO, Leads Lift, New MC, Social Ads) starting at the 4th opp.</div>
       <table class="log-table">
         <thead><tr><th>#</th><th>Employee</th><th>Coach</th><th style="text-align:center">QTD Opps</th><th style="text-align:center">Threshold Status</th><th style="text-align:center">Kickers Earned</th><th style="text-align:center">QTD Payout</th></tr></thead>
         <tbody>${trows}</tbody>
@@ -630,9 +648,9 @@ function showTab(name,el){
   if(el)el.classList.add('active');
   document.getElementById('pane-'+name).classList.add('active');
   if(name==='qtd')requestAnimationFrame(()=>requestAnimationFrame(()=>renderQTD()));
-  if(name==='pcsm'){populatePCSMDropdown();renderPCSM();}
-  if(name==='coach'){populateCoachDropdown();renderCoach();}
-  if(name==='kickers')renderKickers();
+  if(name==='pcsm'){populatePCSMDropdown();populateTabQtrDropdown('pcsmQtrSel',selectedPCSMQtr,q=>{selectedPCSMQtr=q;});renderPCSM();}
+  if(name==='coach'){populateCoachDropdown();populateTabQtrDropdown('coachQtrSel',selectedCoachQtr,q=>{selectedCoachQtr=q;});renderCoach();}
+  if(name==='kickers'){populateTabQtrDropdown('kickersQtrSel',selectedKickersQtr,q=>{selectedKickersQtr=q;});renderKickers();}
   if(name==='log')renderLog();
 }
 
