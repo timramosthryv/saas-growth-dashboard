@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2026 SaaS Growth Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#F0F2F5;color:#0F1735;min-height:100vh}
+.hdr{background:#0F1735;padding:20px 36px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.hdr-left h1{font-size:20px;font-weight:700;color:white;letter-spacing:-.3px}
+.hdr-left p{font-size:12px;color:#A8B4C8;margin-top:5px;line-height:1.6;max-width:740px}
+.hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0}
+.last-updated{font-size:11px;color:#A8B4C8;white-space:nowrap}
+.last-updated strong{color:white}
+.hdr-actions{display:flex;gap:8px;align-items:center}
+.data-badge{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:7px;padding:7px 12px;white-space:nowrap}
+.data-badge .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.data-badge .dot.live{background:#2D9D6A}
+.data-badge .dot.sample{background:#D4A017}
+.data-badge .dot.loading{background:#A8B4C8;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.data-badge span{font-size:11px;color:#CBD5E0;font-weight:600}
+.upload-btn{background:rgba(255,80,0,.15);color:#FF9066;border:1.5px solid rgba(255,80,0,.4);border-radius:7px;padding:7px 14px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.3px;text-transform:uppercase;transition:background .15s;white-space:nowrap}
+.upload-btn:hover{background:rgba(255,80,0,.28)}
+.upload-bar{background:#FFF7F0;border-bottom:2px solid #FF5000;padding:14px 36px;display:none;align-items:center;gap:16px}
+.upload-bar.open{display:flex}
+.upload-zone{flex:1;border:2px dashed #FFB899;border-radius:8px;padding:14px 20px;text-align:center;cursor:pointer;transition:background .15s}
+.upload-zone:hover,.upload-zone.drag{background:#FEE8D6;border-color:#FF5000}
+.upload-zone p{font-size:13px;color:#FF5000;font-weight:600}
+.upload-zone small{font-size:11px;color:#C47A55}
+#fileInput{display:none}
+.upload-note{min-width:220px;max-width:280px;font-size:11px;color:#4A5568;line-height:1.7}
+.upload-note strong{color:#0F1735}
+.tab-bar{background:#0F1735;padding:0 36px;display:flex;border-top:1px solid rgba(255,255,255,.08)}
+.tab{padding:11px 18px;font-size:11px;font-weight:700;color:#A8B4C8;cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}
+.tab:hover{color:white}
+.tab.active{color:#FF5000;border-bottom-color:#FF5000}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:18px 36px 2px}
+.kpi-row-5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;padding:18px 36px 2px}
+.kpi-row-6{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;padding:18px 36px 2px}
+.kpi{background:white;border-radius:10px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.kpi.kicker-tile{background:#0F1735}
+.kpi-val{font-size:28px;font-weight:700;color:#FF5000;letter-spacing:-1px}
+.kpi-val.zero{color:#A0AEC0}
+.kpi-val.muted{color:#A0AEC0}
+.kpi-lbl{font-size:10px;color:#718096;margin-top:5px;text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+.kpi-lbl.kl{color:#A8B4C8}
+.kpi-sub{font-size:10px;color:#A0AEC0;margin-top:3px}
+.kpi-sub.ks{color:#718096}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px 36px 36px}
+.full{grid-column:1/-1}
+.panel{background:white;border-radius:10px;padding:20px 22px 16px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.panel-title{font-size:11px;font-weight:700;color:#0F1735;text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px}
+.panel-sub{font-size:11px;color:#718096;margin-bottom:12px;margin-top:-6px}
+.caption{font-size:12px;color:#718096;margin-top:10px;line-height:1.6}
+svg{display:block;width:100%}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
+.leg{display:flex;align-items:center;gap:5px;font-size:11px;color:#4A5568}
+.leg-dot{width:12px;height:12px;border-radius:2px;flex-shrink:0}
+.selector-row{display:flex;align-items:center;gap:12px;padding:16px 36px 0;flex-wrap:wrap}
+.selector-row label{font-size:11px;font-weight:700;color:#0F1735;text-transform:uppercase;letter-spacing:.5px}
+.selector-row select{border:1.5px solid #DFE4ED;border-radius:8px;padding:8px 14px;font-size:13px;color:#0F1735;background:white;cursor:pointer;min-width:190px}
+.selector-row select:focus{outline:none;border-color:#FF5000}
+.period-toggle{display:flex;background:#F0F2F5;border-radius:8px;padding:3px;gap:2px}
+.period-btn{padding:6px 16px;font-size:11px;font-weight:700;color:#718096;cursor:pointer;border-radius:6px;border:none;background:transparent;text-transform:uppercase;letter-spacing:.4px;transition:all .15s}
+.period-btn.active{background:white;color:#0F1735;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.log-table{width:100%;border-collapse:collapse;margin-top:8px}
+.log-table th{font-size:11px;font-weight:700;color:#0F1735;text-transform:uppercase;letter-spacing:.5px;text-align:left;padding:10px 14px;background:#F5F7FA;border-bottom:2px solid #DFE4ED}
+.log-table td{font-size:13px;color:#4A5568;padding:10px 14px;border-bottom:1px solid #F0F4F8}
+.log-table tr:last-child td{border:none}
+.log-table tr:hover td{background:#FAFBFC}
+.badge-kicker{background:#FFF7F0;color:#FF5000;font-size:11px;font-weight:700;padding:2px 10px;border-radius:12px;border:1px solid #FFB899}
+.badge-zero{background:#F5F5F5;color:#A0AEC0;font-size:11px;font-weight:600;padding:2px 10px;border-radius:12px}
+.pane{display:none}
+.pane.active{display:block}
+.empty-state{text-align:center;padding:60px 20px;color:#A0AEC0}
+.empty-state h3{font-size:16px;margin-bottom:8px;color:#4A5568}
+.empty-state p{font-size:13px;line-height:1.7}
+.qtd-label{display:inline-block;background:#FF5000;color:white;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.5px;margin-left:6px;vertical-align:middle}
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,53,.75);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.loading-overlay.show{display:flex}
+.spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,.2);border-top-color:#FF5000;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-overlay p{color:white;font-size:14px;font-weight:600;letter-spacing:.3px}
+.no-data-banner{background:#FFF7F0;border:1.5px solid #FFB899;border-radius:8px;padding:16px 22px;margin:20px 36px;font-size:13px;color:#8B4513;line-height:1.7}
+.no-data-banner strong{color:#FF5000}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p id="loadingMsg">Loading dashboard data...</p>
+</div>
+
+<div class="hdr">
+  <div class="hdr-left">
+    <h1>2026 SaaS Growth &mdash; YTD Performance Dashboard</h1>
+    <p id="hdrDesc">Loading data from repository...</p>
+  </div>
+  <div class="hdr-right">
+    <div class="last-updated">Last updated: <strong id="lastUpdated">--</strong></div>
+    <div class="hdr-actions">
+      <div class="data-badge"><div class="dot loading" id="dataDot"></div><span id="dataLabel">Loading...</span></div>
+      <button class="upload-btn" onclick="toggleUpload()">&#8593; Local Preview</button>
+    </div>
+  </div>
+</div>
+
+<div class="upload-bar" id="uploadBar">
+  <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()"
+       ondragover="event.preventDefault();this.classList.add('drag')"
+       ondragleave="this.classList.remove('drag')"
+       ondrop="event.preventDefault();this.classList.remove('drag');handleFiles(event.dataTransfer.files)">
+    <p>Drop .xlsx here to preview locally</p>
+    <small>Local preview only &mdash; not published to other users</small>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx" onchange="handleFiles(this.files)">
+  <div class="upload-note">
+    <strong>To publish updated data for everyone:</strong><br>
+    Go to the GitHub repo &rarr; click <code>data.xlsx</code> &rarr; upload the new file &rarr; commit. Live within ~60 seconds.
+  </div>
+</div>
+
+<div class="tab-bar">
+  <div class="tab active" onclick="showTab('summary',this)">YTD Summary</div>
+  <div class="tab" onclick="showTab('qtd',this)">QTD Summary</div>
+  <div class="tab" onclick="showTab('pcsm',this)">By Employee</div>
+  <div class="tab" onclick="showTab('coach',this)">By Coach</div>
+  <div class="tab" onclick="showTab('kickers',this)">Kickers</div>
+  <div class="tab" onclick="showTab('log',this)">Data Source</div>
+</div>
+
+<div class="pane active" id="pane-summary">
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-val" id="s-total">--</div><div class="kpi-lbl">Total SaaS Growth YTD</div></div>
+    <div class="kpi"><div class="kpi-val" id="s-opps">--</div><div class="kpi-lbl">Total Opportunities</div></div>
+    <div class="kpi"><div class="kpi-val" id="s-avg">--</div><div class="kpi-lbl">Avg Deal Size</div></div>
+    <div class="kpi"><div class="kpi-val" id="s-ba">--</div><div class="kpi-lbl">BA Engagement Rate</div></div>
+  </div>
+  <div class="grid">
+    <div class="panel full"><div class="panel-title">Monthly SaaS Growth &amp; Opportunity Volume</div><svg id="c1" height="230"></svg><div class="legend"><div class="leg"><div class="leg-dot" style="background:#2D9D6A"></div>&gt;$120k</div><div class="leg"><div class="leg-dot" style="background:#D4A017"></div>$80k&ndash;$120k</div><div class="leg"><div class="leg-dot" style="background:#E53E3E"></div>&lt;$80k</div><div class="leg"><div class="leg-dot" style="background:#CBD5E0"></div>Partial month</div></div></div>
+    <div class="panel"><div class="panel-title">SaaS Growth by Type &mdash; All Types</div><svg id="c2"></svg></div>
+    <div class="panel"><div class="panel-title">Coach Performance &mdash; Q1 vs. Q2 2026</div><svg id="c4" height="310"></svg><div class="legend"><div class="leg"><div class="leg-dot" style="background:#0F1735"></div>Q1 2026</div><div class="leg"><div class="leg-dot" style="background:#FF5000"></div>Q2 2026</div></div></div>
+    <div class="panel full"><div class="panel-title">PCSM Performance Ranking &mdash; Total Dollars &amp; Avg Deal Size</div><div id="c3-wrap"><svg id="c3"></svg></div></div>
+    <div class="panel"><div class="panel-title">BA Presence: Impact on Average Deal Size</div><svg id="c5" height="170"></svg><div class="caption" id="c5-cap"></div></div>
+    <div class="panel"><div class="panel-title">Net New Adds vs. Upgrades and Expansions</div><svg id="c6" height="170"></svg><div class="caption" id="c6-cap"></div></div>
+    <div class="panel full"><div class="panel-title">SaaS Growth Type Mix by Coach</div><svg id="c7" height="250"></svg><div class="legend"><div class="leg"><div class="leg-dot" style="background:#FF5000"></div>TL Increase</div><div class="leg"><div class="leg-dot" style="background:#E07B39"></div>New TL</div><div class="leg"><div class="leg-dot" style="background:#0F6B9E"></div>New Social Ads</div><div class="leg"><div class="leg-dot" style="background:#2D9D6A"></div>New SEO</div><div class="leg"><div class="leg-dot" style="background:#8B5CF6"></div>SEO Increase</div><div class="leg"><div class="leg-dot" style="background:#D4A017"></div>Leads Lift</div><div class="leg"><div class="leg-dot" style="background:#CBD5E0"></div>Other</div></div></div>
+  </div>
+</div>
+
+<div class="pane" id="pane-qtd">
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-val" id="q-total">--</div><div class="kpi-lbl">Total SaaS Growth <span class="qtd-label" id="q-lbl1">QTD</span></div></div>
+    <div class="kpi"><div class="kpi-val" id="q-opps">--</div><div class="kpi-lbl">Total Opportunities <span class="qtd-label" id="q-lbl2">QTD</span></div></div>
+    <div class="kpi"><div class="kpi-val" id="q-avg">--</div><div class="kpi-lbl">Avg Deal Size <span class="qtd-label" id="q-lbl3">QTD</span></div></div>
+    <div class="kpi"><div class="kpi-val" id="q-ba">--</div><div class="kpi-lbl">BA Engagement Rate <span class="qtd-label" id="q-lbl4">QTD</span></div></div>
+  </div>
+  <div class="grid">
+    <div class="panel full"><div class="panel-title">Monthly Growth <span class="qtd-label" id="q-lbl5">QTD</span></div><svg id="q1" height="230"></svg></div>
+    <div class="panel"><div class="panel-title">Growth by Type <span class="qtd-label" id="q-lbl6">QTD</span></div><svg id="q2"></svg></div>
+    <div class="panel"><div class="panel-title">Coach Rankings <span class="qtd-label" id="q-lbl7">QTD</span></div><svg id="q4" height="310"></svg></div>
+    <div class="panel full"><div class="panel-title">PCSM Performance Ranking <span class="qtd-label" id="q-lbl8">QTD</span></div><svg id="q3"></svg></div>
+    <div class="panel"><div class="panel-title">BA Presence <span class="qtd-label" id="q-lbl9">QTD</span></div><svg id="q5" height="170"></svg></div>
+    <div class="panel"><div class="panel-title">Net New vs. Upgrades <span class="qtd-label" id="q-lbl10">QTD</span></div><svg id="q6" height="170"></svg></div>
+    <div class="panel full"><div class="panel-title">Growth Type Mix by Coach <span class="qtd-label" id="q-lbl11">QTD</span></div><svg id="q7" height="250"></svg><div class="legend"><div class="leg"><div class="leg-dot" style="background:#FF5000"></div>TL Increase</div><div class="leg"><div class="leg-dot" style="background:#E07B39"></div>New TL</div><div class="leg"><div class="leg-dot" style="background:#0F6B9E"></div>New Social Ads</div><div class="leg"><div class="leg-dot" style="background:#2D9D6A"></div>New SEO</div><div class="leg"><div class="leg-dot" style="background:#8B5CF6"></div>SEO Increase</div><div class="leg"><div class="leg-dot" style="background:#D4A017"></div>Leads Lift</div><div class="leg"><div class="leg-dot" style="background:#CBD5E0"></div>Other</div></div></div>
+  </div>
+</div>
+
+<div class="pane" id="pane-pcsm">
+  <div class="selector-row">
+    <label>Employee</label>
+    <select id="pcsmSel" onchange="renderPCSM()"><option value="">-- Select Employee --</option></select>
+    <label>Period</label>
+    <div class="period-toggle">
+      <button class="period-btn active" id="pPeriodYTD" onclick="setPcsmPeriod('ytd')">YTD</button>
+      <button class="period-btn" id="pPeriodQTD" onclick="setPcsmPeriod('qtd')">QTD</button>
+    </div>
+  </div>
+  <div id="pcsm-content"><div class="empty-state"><h3>Select an employee above</h3><p>Choose a PCSM to see their individual performance breakdown.</p></div></div>
+</div>
+
+<div class="pane" id="pane-coach">
+  <div class="selector-row">
+    <label>Coach</label>
+    <select id="coachSel" onchange="renderCoach()"><option value="">-- Select Coach --</option></select>
+    <label>Period</label>
+    <div class="period-toggle">
+      <button class="period-btn active" id="cPeriodYTD" onclick="setCoachPeriod('ytd')">YTD</button>
+      <button class="period-btn" id="cPeriodQTD" onclick="setCoachPeriod('qtd')">QTD</button>
+    </div>
+  </div>
+  <div id="coach-content"><div class="empty-state"><h3>Select a coach above</h3></div></div>
+</div>
+
+<div class="pane" id="pane-kickers"><div id="kickers-content"></div></div>
+
+<div class="pane" id="pane-log">
+  <div class="grid" style="grid-template-columns:1fr">
+    <div class="panel full"><div class="panel-title">Data Source</div><div id="logContent"></div></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// @@DATA_INJECTION@@
+
+const NS='http://www.w3.org/2000/svg';
+const ORANGE='#FF5000',NAVY='#0F1735',GREEN='#2D9D6A',YELLOW='#D4A017',RED='#E53E3E',GRAY='#EDF2F7',MUTED='#718096',BODY='#4A5568';
+const MONTH_ORDER=['Jan 2026','Feb 2026','Mar 2026','Apr 2026','May 2026','Jun 2026','Jul 2026','Aug 2026','Sep 2026','Oct 2026','Nov 2026','Dec 2026'];
+const SEG_COLORS=[ORANGE,'#E07B39','#0F6B9E',GREEN,'#8B5CF6',YELLOW,'#CBD5E0'];
+const SEG_LABELS=['TL Increase','New TL','New Thryv Social Ads','New SEO','SEO Increase','Leads Lift Upgrade'];
+function getCQ(){const d=new Date();return'Q'+Math.ceil((d.getMonth()+1)/3)+' '+d.getFullYear();}
+const CQ=getCQ();
+let pcsmPeriod='ytd',coachPeriod='ytd',DATA=[],DATA_SOURCE='loading',DATA_TS=null;
+
+function setPcsmPeriod(p){pcsmPeriod=p;document.getElementById('pPeriodYTD').classList.toggle('active',p==='ytd');document.getElementById('pPeriodQTD').classList.toggle('active',p==='qtd');renderPCSM();}
+function setCoachPeriod(p){coachPeriod=p;document.getElementById('cPeriodYTD').classList.toggle('active',p==='ytd');document.getElementById('cPeriodQTD').classList.toggle('active',p==='qtd');renderCoach();}
+function calcKicker(q){return Math.max(0,q-3);}
+// Kicker payout rules (confirmed): TL / SEO (not Keyword Add On) / Leads Lift / New MC = tiered.
+// New Thryv Social Ads & Thryv Social Ads Increase = $25 flat. All others = $0.
+// Tiers: $100-$249=$10, $250-$999=$25, $1,000-$1,999=$100, $2,000+=$150.
+// Payout applies starting at the 4th growth per quarter (any type counts toward threshold).
+function getKickerRate(gt,amt){
+  gt=(gt||'').trim();
+  if(gt==='New Thryv Social Ads'||gt==='Thryv Social Ads Increase')return 25;
+  const isTiered=(gt.includes('TL')||gt.includes('Leads Lift')||gt.startsWith('New MC')||(gt.includes('SEO')&&gt!=='SEO Keyword Add On'));
+  if(!isTiered)return 0;
+  if(amt>=2000)return 150;if(amt>=1000)return 100;if(amt>=250)return 25;if(amt>=100)return 10;
+  return 0;
+}
+function thresholdSet(qRows){
+  const idx=qRows.map((_,i)=>i).sort((a,b)=>(Number(qRows[a]['SaaS Growth'])||0)-(Number(qRows[b]['SaaS Growth'])||0));
+  return new Set(idx.slice(0,3));
+}
+function calcQtdPayout(pcsm,quarter){
+  const qRows=DATA.filter(r=>(r['PCSM']||'').trim()===pcsm&&r['Quarter']===quarter);
+  if(qRows.length<=3)return 0;
+  const skip=thresholdSet(qRows);
+  return qRows.reduce((sum,r,i)=>sum+(skip.has(i)?0:getKickerRate((r['SaaS Growth Type']||'').trim(),Number(r['SaaS Growth'])||0)),0);
+}
+function svgEl(id){return document.getElementById(id);}
+function svgW(id){const el=svgEl(id);if(!el)return 600;const w=el.parentElement.getBoundingClientRect().width-44;return w>80?w:600;}
+function s(tag,a,par){const e=document.createElementNS(NS,tag);for(const[k,v]of Object.entries(a))e.setAttribute(k,v);if(par)par.appendChild(e);return e;}
+function t(par,x,y,str,a={}){const e=s('text',{x,y,'font-family':'inherit',...a},par);e.textContent=String(str);return e;}
+function fmtK(n){return'$'+(n>=1000?(n/1000).toFixed(0)+'k':n.toFixed(0));}
+function fmtD(n){return'$'+Math.round(n).toLocaleString();}
+
+// Aggregations
+function aggMonthly(rows){
+  const m={};rows.forEach(r=>{const mo=r['Month Impacted']||'';if(!mo)return;if(!m[mo])m[mo]={d:0,o:0};m[mo].d+=Number(r['SaaS Growth'])||0;m[mo].o++;});
+  return MONTH_ORDER.filter(mo=>m[mo]).map(mo=>({m:mo.replace(' 2026',mo==='Jun 2026'?'*':'').replace(' 2026',''),d:m[mo].d,o:m[mo].o,partial:mo==='Jun 2026'}));
+}
+function aggType(rows){
+  const t={};rows.forEach(r=>{const tp=r['SaaS Growth Type']||'Other';if(!t[tp])t[tp]={d:0,o:0};t[tp].d+=Number(r['SaaS Growth'])||0;t[tp].o++;});
+  return Object.entries(t).map(([type,v])=>({type,d:v.d,o:v.o,avg:v.o?Math.round(v.d/v.o):0})).sort((a,b)=>b.d-a.d);
+}
+function aggPCSM(rows){
+  const m={};rows.forEach(r=>{const p=r['PCSM']||'?';if(!m[p])m[p]={d:0,o:0};m[p].d+=Number(r['SaaS Growth'])||0;m[p].o++;});
+  return Object.entries(m).map(([name,v])=>({name,total:v.d,opps:v.o,avg:v.o?Math.round(v.d/v.o):0})).sort((a,b)=>b.total-a.total);
+}
+function aggCoach(rows){
+  const m={};rows.forEach(r=>{const c=r['Coach']||'?';if(!m[c])m[c]={d:0,o:0};m[c].d+=Number(r['SaaS Growth'])||0;m[c].o++;});
+  return Object.entries(m).map(([name,v])=>({name,total:v.d,opps:v.o,avg:v.o?Math.round(v.d/v.o):0})).sort((a,b)=>b.total-a.total);
+}
+function aggCoachSlope(rows){
+  const q={};rows.forEach(r=>{const c=r['Coach']||'?',qt=r['Quarter']||'';if(!q[c])q[c]={q1:0,q2:0};const v=Number(r['SaaS Growth'])||0;if(qt.includes('Q1'))q[c].q1+=v;else if(qt.includes('Q2'))q[c].q2+=v;});
+  return Object.entries(q).map(([coach,v])=>({coach,...v})).sort((a,b)=>(b.q1+b.q2)-(a.q1+a.q2)).slice(0,6);
+}
+function aggBA(rows){
+  let pD=0,pO=0,aD=0,aO=0;
+  rows.forEach(r=>{const ba=(r['Was the BA on Recommendation Call']||'').toLowerCase(),v=Number(r['SaaS Growth'])||0;
+    ba==='yes'||ba.includes('recommendation')?(pD+=v,pO++):(aD+=v,aO++);});
+  const tot=pO+aO;
+  return[{label:'BA Present',sub:`${pO} opps · ${tot?Math.round(pO/tot*100):0}%`,avg:pO?Math.round(pD/pO):0,clr:GREEN},{label:'BA Absent',sub:`${aO} opps · ${tot?Math.round(aO/tot*100):0}%`,avg:aO?Math.round(aD/aO):0,clr:RED}];
+}
+function aggNN(rows){
+  let uD=0,nD=0,uO=0,nO=0;
+  rows.forEach(r=>{const old=Number(r['Old SaaS Dollars'])||0,v=Number(r['SaaS Growth'])||0;old>0?(uD+=v,uO++):(nD+=v,nO++);});
+  const tD=uD+nD,tO=uO+nO;return{upD:tD?+((uD/tD)*100).toFixed(1):0,nnD:tD?+((nD/tD)*100).toFixed(1):0,upO:tO?+((uO/tO)*100).toFixed(1):0,nnO:tO?+((nO/tO)*100).toFixed(1):0};
+}
+function aggMix(rows){
+  const m={};rows.forEach(r=>{const c=r['Coach']||'?',tp=r['SaaS Growth Type']||'Other',v=Number(r['SaaS Growth'])||0;if(!m[c])m[c]={};m[c][tp]=(m[c][tp]||0)+v;});
+  return Object.entries(m).map(([name,types])=>{
+    const total=Object.values(types).reduce((s,x)=>s+x,0);
+    const segs=[...SEG_LABELS.map(l=>types[l]||0),Object.entries(types).filter(([k])=>!SEG_LABELS.includes(k)).reduce((s,[,v])=>s+v,0)];
+    return{name:name.split(' ').slice(0,2).join(' '),total,segs};
+  }).sort((a,b)=>b.total-a.total).slice(0,5);
+}
+function uniq(key){return[...new Set(DATA.map(r=>r[key]).filter(Boolean))].sort();}
+
+// Chart renderers
+function drawMonthly(id,data){
+  const el=svgEl(id);if(!el)return;el.replaceChildren();
+  const W=svgW(id),H=+el.getAttribute('height')||230;el.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  if(!data?.length){t(el,W/2,H/2,'No data',{'text-anchor':'middle',fill:MUTED,'font-size':13});return;}
+  const P={t:16,r:52,b:40,l:56},CW=W-P.l-P.r,CH=H-P.t-P.b;
+  const maxD=Math.max(...data.map(d=>d.d))||1,maxO=Math.max(...data.map(d=>d.o))||1;
+  const n=data.length,step=CW/n,bw=step*0.52,barZoneH=CH*0.60,barBase=P.t+CH,lineTop=P.t+4,lineBot=P.t+CH*0.52;
+  const yp=o=>lineBot-((o/maxO)*(lineBot-lineTop));
+  [0,.25,.5,.75,1].forEach(f=>{const v=maxD*f,y=barBase-f*barZoneH;s('line',{x1:P.l,y1:y,x2:P.l+CW,y2:y,stroke:GRAY,'stroke-width':1},el);t(el,P.l-5,y+4,fmtK(v),{'text-anchor':'end',fill:MUTED,'font-size':10});});
+  [0,.5,1].forEach(f=>{const v=Math.round(maxO*f),y=yp(v);t(el,P.l+CW+5,y+4,v,{fill:MUTED,'font-size':10});});
+  t(el,P.l+CW+5,lineTop-2,'Opps',{fill:MUTED,'font-size':10,'font-weight':600});
+  data.forEach((d,i)=>{
+    const x=P.l+i*step+(step-bw)/2,bh=(d.d/maxD)*barZoneH,y=barBase-bh;
+    const clr=d.partial?'#CBD5E0':d.d>=120000?GREEN:d.d>=80000?YELLOW:RED;
+    s('rect',{x,y,width:bw,height:bh,fill:clr,rx:3},el);
+    const lY=bh>22?y+13:y-5;
+    t(el,x+bw/2,lY,fmtK(d.d),{'text-anchor':'middle',fill:bh>22?'white':BODY,'font-size':10,'font-weight':700});
+    t(el,x+bw/2,barBase+14,d.m,{'text-anchor':'middle',fill:BODY,'font-size':11});
+  });
+  const pts=data.map((d,i)=>[P.l+i*step+step/2,yp(d.o)]);
+  s('polyline',{points:pts.map(p=>p.join(',')).join(' '),fill:'none',stroke:NAVY,'stroke-width':2.5},el);
+  pts.forEach(([x,y],i)=>{s('circle',{cx:x,cy:y,r:4,fill:NAVY,stroke:'white','stroke-width':1.5},el);t(el,x,y-8,data[i].o,{'text-anchor':'middle',fill:NAVY,'font-size':10,'font-weight':600});});
+  t(el,W-4,H-2,'*Jun 1–17 only',{'text-anchor':'end',fill:'#A0AEC0','font-size':9,'font-style':'italic'});
+}
+
+function drawHBar(id,data,lk,vk,color,showAvg,cap=8){
+  const el=svgEl(id);if(!el)return;el.replaceChildren();
+  const W=svgW(id);
+  if(!data?.length){el.setAttribute('height',60);el.setAttribute('viewBox',`0 0 ${W} 60`);t(el,W/2,30,'No data',{'text-anchor':'middle',fill:MUTED,'font-size':13});return;}
+  const n=cap>0?Math.min(data.length,cap):data.length;
+  const lW=cap===0?Math.min(185,W*0.35):Math.min(145,W*0.3),P={t:20,r:showAvg?72:12,b:8,l:lW+10};
+  const H=cap===0?(P.t+n*36+P.b):(+el.getAttribute('height')||310);
+  el.setAttribute('height',H);el.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const CW=W-P.l-P.r,CH=H-P.t-P.b,maxV=data[0][vk]*1.1||100,step=CH/n,bh=step*0.55;
+  if(showAvg)t(el,W-4,14,'Avg/Opp',{'text-anchor':'end',fill:MUTED,'font-size':10,'font-weight':600});
+  data.slice(0,n).forEach((d,i)=>{
+    const y=P.t+i*step+(step-bh)/2,bw=(d[vk]/maxV)*CW,op=Math.max(0.45,1-i*0.06);
+    t(el,P.l-7,y+bh/2+4,d[lk],{'text-anchor':'end',fill:NAVY,'font-size':11});
+    s('rect',{x:P.l,y,width:bw,height:bh,fill:color||ORANGE,rx:3,opacity:op},el);
+    t(el,P.l+bw+5,y+bh/2+4,fmtK(d[vk]),{fill:NAVY,'font-size':11,'font-weight':600});
+    if(showAvg&&d.avg)t(el,W-4,y+bh/2+4,'$'+d.avg.toLocaleString(),{'text-anchor':'end',fill:MUTED,'font-size':10});
+  });
+}
+
+function drawCoachSlope(id,data){
+  const el=svgEl(id);if(!el)return;el.replaceChildren();
+  const W=svgW(id),H=+el.getAttribute('height')||310;el.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  if(!data?.length)return;
+  const lW=130,P={t:8,r:78,b:8,l:lW+12},CW=W-P.l-P.r,CH=H-P.t-P.b;
+  const n=data.length,gH=CH/n,bh=Math.min(gH*0.28,18),gap=gH*0.08;
+  const maxV=Math.max(...data.flatMap(d=>[d.q1,d.q2]))*1.12||1;
+  s('line',{x1:P.l,y1:P.t,x2:P.l,y2:P.t+CH,stroke:'#DFE4ED','stroke-width':1},el);
+  data.forEach((d,i)=>{
+    const gy=P.t+i*gH,midY=gy+gH/2;
+    t(el,P.l-10,midY+4,d.coach,{'text-anchor':'end',fill:NAVY,'font-size':11,'font-weight':600});
+    const y1=midY-gap/2-bh,bw1=(d.q1/maxV)*CW;
+    s('rect',{x:P.l,y:y1,width:bw1,height:bh,fill:NAVY,rx:2},el);
+    t(el,P.l+bw1+5,y1+bh/2+3.5,fmtK(d.q1),{fill:NAVY,'font-size':10,'font-weight':600});
+    const y2=midY+gap/2,bw2=(d.q2/maxV)*CW;
+    s('rect',{x:P.l,y:y2,width:bw2,height:bh,fill:ORANGE,rx:2},el);
+    t(el,P.l+bw2+5,y2+bh/2+3.5,fmtK(d.q2),{fill:ORANGE,'font-size':10,'font-weight':600});
+    if(d.q1>0){const chg=((d.q2-d.q1)/d.q1*100).toFixed(0),clr=chg>0?GREEN:RED;s('rect',{x:W-P.r+2,y:midY-11,width:P.r-6,height:22,fill:chg>0?'#F0FFF8':'#FFF5F5',rx:6},el);t(el,W-P.r/2-1,midY+4.5,(chg>0?'+':'')+chg+'%',{'text-anchor':'middle',fill:clr,'font-size':11,'font-weight':700});}
+    if(i<n-1)s('line',{x1:P.l-lW,y1:gy+gH,x2:W,y2:gy+gH,stroke:GRAY,'stroke-width':1},el);
+  });
+}
+
+function drawPCSMRanked(id,data,teamAvg){
+  const el=svgEl(id);if(!el)return;el.replaceChildren();
+  if(!data?.length){const W=svgW(id);el.setAttribute('height',80);el.setAttribute('viewBox',`0 0 ${W} 80`);t(el,W/2,40,'No data',{'text-anchor':'middle',fill:MUTED,'font-size':13});return;}
+  const n=data.length,ROW_H=26,P={t:28,r:100,b:24,l:160};
+  const W=svgW(id),H=P.t+n*ROW_H+P.b;
+  el.setAttribute('height',H);el.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const CW=W-P.l-P.r,maxV=data[0].total*1.1||1,AVG=teamAvg||1289;
+  t(el,P.l+CW/2,18,'Total Dollars',{'text-anchor':'middle',fill:MUTED,'font-size':10,'font-weight':700});
+  t(el,W-P.r/2,18,'Avg Deal',{'text-anchor':'middle',fill:MUTED,'font-size':10,'font-weight':700});
+  data.forEach((d,i)=>{
+    const y=P.t+i*ROW_H,midY=y+ROW_H/2,bh=ROW_H*0.62,bw=(d.total/maxV)*CW;
+    if(i%2===0)s('rect',{x:0,y,width:W,height:ROW_H,fill:'#FAFBFD'},el);
+    t(el,8,midY+4,(i+1)+'.',{fill:MUTED,'font-size':10,'font-weight':600});
+    t(el,P.l-8,midY+4,d.name,{'text-anchor':'end',fill:NAVY,'font-size':11,'font-weight':i<3?700:500});
+    const bc=i===0?ORANGE:i<3?'#FF7A3A':'#FFA07A';
+    s('rect',{x:P.l,y:midY-bh/2,width:bw,height:bh,fill:bc,rx:3},el);
+    if(bw>60)t(el,P.l+bw-5,midY+4,fmtD(d.total),{'text-anchor':'end',fill:'white','font-size':10,'font-weight':700});
+    else t(el,P.l+bw+5,midY+4,fmtD(d.total),{fill:NAVY,'font-size':10,'font-weight':600});
+    t(el,P.l+CW+4,midY+4,d.opps+' opps',{fill:MUTED,'font-size':9});
+    const above=d.avg>=AVG,px=W-P.r+2,pw=P.r-6;
+    s('rect',{x:px,y:midY-bh/2,width:pw,height:bh,fill:above?'#F0FFF8':'#FFF5F5',rx:8},el);
+    t(el,px+pw/2,midY+4,'$'+d.avg.toLocaleString(),{'text-anchor':'middle',fill:above?GREEN:RED,'font-size':10,'font-weight':700});
+  });
+  t(el,P.l,H-6,'Team avg $'+AVG.toLocaleString()+' — green = above avg, red = below avg',{fill:MUTED,'font-size':10});
+}
+
+function drawBA(id,data){
+  const el=svgEl(id);if(!el)return;el.replaceChildren();
+  const W=svgW(id),H=+el.getAttribute('height')||170;el.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  if(!data?.length||!data[0].avg)return;
+  const maxV=Math.max(...data.map(d=>d.avg))*1.15,P={t:32,r:8,b:32,l:140},CW=W-P.l-P.r,CH=H-P.t-P.b;
+  const bh=CH/data.length*0.55,step=CH/data.length;
+  const totO=data.reduce((s,d)=>{const m=d.sub.match(/(\d+) opps/);return s+(m?+m[1]:0);},0);
+  const bm=data.reduce((s,d)=>{const m=d.sub.match(/(\d+) opps/);return s+d.avg*(m?+m[1]:0);},0)/(totO||1);
+  const bxPos=P.l+(bm/maxV)*CW;
+  s('line',{x1:bxPos,y1:P.t-8,x2:bxPos,y2:P.t+CH+8,stroke:NAVY,'stroke-width':1.5,'stroke-dasharray':'5,3'},el);
+  t(el,bxPos,P.t-11,'Team Avg',{'text-anchor':'middle',fill:NAVY,'font-size':10,'font-weight':600});
+  data.forEach((d,i)=>{
+    const y=P.t+i*step+(step-bh)/2,bw=(d.avg/maxV)*CW;
+    t(el,P.l-7,y+bh/2+4,d.label,{'text-anchor':'end',fill:NAVY,'font-size':12,'font-weight':600});
+    t(el,P.l-7,y+bh/2+16,d.sub,{'text-anchor':'end',fill:MUTED,'font-size':10});
+    s('rect',{x:P.l,y,width:bw,height:bh,fill:d.clr,rx:4},el);
+    t(el,P.l+bw+7,y+bh/2+5,fmtD(d.avg),{fill:d.clr,'font-size':13,'font-weight':700});
+  });
+}
+
+function drawNN(id,nn){
+  const el=svgEl(id);if(!el)return;el.replaceChildren();
+  const W=svgW(id),H=+el.getAttribute('height')||170;el.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const rows=[{label:'Share of Dollars',up:nn.upD,nw:nn.nnD},{label:'Share of Opps',up:nn.upO,nw:nn.nnO}];
+  const P={t:28,r:8,b:40,l:155},CW=W-P.l-P.r,CH=H-P.t-P.b,step=CH/2,bh=step*0.6;
+  s('rect',{x:P.l,y:H-18,width:14,height:12,fill:NAVY,rx:2},el);t(el,P.l+18,H-8,'Upgrade / Expansion',{fill:BODY,'font-size':11});
+  s('rect',{x:P.l+162,y:H-18,width:14,height:12,fill:ORANGE,rx:2},el);t(el,P.l+180,H-8,'Net New Add',{fill:BODY,'font-size':11});
+  rows.forEach((r,i)=>{
+    const y=P.t+i*step+(step-bh)/2,w1=(r.up/100)*CW,w2=(r.nw/100)*CW;
+    t(el,P.l-7,y+bh/2+4,r.label,{'text-anchor':'end',fill:NAVY,'font-size':11,'font-weight':600});
+    s('rect',{x:P.l,y,width:w1,height:bh,fill:NAVY},el);s('rect',{x:P.l+w1,y,width:w2,height:bh,fill:ORANGE},el);
+    if(w1>40)t(el,P.l+w1/2,y+bh/2+4,r.up+'%',{'text-anchor':'middle',fill:'white','font-size':12,'font-weight':700});
+    if(w2>40)t(el,P.l+w1+w2/2,y+bh/2+4,r.nw+'%',{'text-anchor':'middle',fill:'white','font-size':12,'font-weight':700});
+  });
+}
+
+function drawMix(id,coaches){
+  const el=svgEl(id);if(!el)return;el.replaceChildren();
+  const W=svgW(id),H=+el.getAttribute('height')||250;el.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  if(!coaches?.length)return;
+  const P={t:8,r:16,b:52,l:16},CW=W-P.l-P.r,CH=H-P.t-P.b,n=coaches.length,step=CW/n,bw=step*0.65;
+  coaches.forEach((c,i)=>{
+    const x=P.l+i*step+(step-bw)/2;let cumY=P.t+CH;
+    c.segs.forEach((v,j)=>{if(!c.total||v<1)return;const sh=(v/c.total)*CH;if(sh<1)return;cumY-=sh;s('rect',{x,y:cumY,width:bw,height:sh,fill:SEG_COLORS[j]||'#CBD5E0'},el);if(sh>14)t(el,x+bw/2,cumY+sh/2+4,((v/c.total)*100).toFixed(0)+'%',{'text-anchor':'middle',fill:'white','font-size':10,'font-weight':600});});
+    t(el,x+bw/2,P.t+CH+16,c.name,{'text-anchor':'middle',fill:NAVY,'font-size':11,'font-weight':600});
+    t(el,x+bw/2,P.t+CH+30,fmtK(c.total),{'text-anchor':'middle',fill:MUTED,'font-size':10});
+  });
+}
+
+// Tab renderers
+function renderSummary(){
+  if(!DATA.length)return;
+  const total=DATA.reduce((s,r)=>s+(Number(r['SaaS Growth'])||0),0),opps=DATA.length,avg=Math.round(total/opps);
+  const baR=DATA.filter(r=>{const b=(r['Was the BA on Recommendation Call']||'').toLowerCase();return b==='yes'||b.includes('recommendation');});
+  document.getElementById('s-total').textContent='$'+Math.round(total).toLocaleString();
+  document.getElementById('s-opps').textContent=opps.toLocaleString();
+  document.getElementById('s-avg').textContent='$'+avg.toLocaleString();
+  document.getElementById('s-ba').textContent=((baR.length/opps)*100).toFixed(1)+'%';
+  document.getElementById('hdrDesc').textContent=`The team generated $${Math.round(total).toLocaleString()} across ${opps.toLocaleString()} opportunities year-to-date. Use the tabs below to explore performance by employee or coach.`;
+  const ba=aggBA(DATA),nn=aggNN(DATA);
+  drawMonthly('c1',aggMonthly(DATA));drawHBar('c2',aggType(DATA),'type','d',ORANGE,true,0);
+  drawCoachSlope('c4',aggCoachSlope(DATA));drawPCSMRanked('c3',aggPCSM(DATA),avg);
+  drawBA('c5',ba);drawNN('c6',nn);drawMix('c7',aggMix(DATA));
+  const c5=document.getElementById('c5-cap');if(c5)c5.textContent=`BA presence correlates with a higher average deal ($${ba[0].avg.toLocaleString()} vs. $${ba[1].avg.toLocaleString()}). ${baR.length} of ${opps} opportunities included a BA.`;
+  const c6=document.getElementById('c6-cap');if(c6)c6.textContent=`Upgrades generate ${nn.upD}% of all dollars across ${nn.upO}% of opportunities.`;
+}
+
+function renderQTD(){
+  if(!DATA.length)return;
+  const qRows=DATA.filter(r=>r['Quarter']===CQ);
+  const total=qRows.reduce((s,r)=>s+(Number(r['SaaS Growth'])||0),0),opps=qRows.length,avg=opps?Math.round(total/opps):0;
+  const baR=qRows.filter(r=>{const b=(r['Was the BA on Recommendation Call']||'').toLowerCase();return b==='yes'||b.includes('recommendation');});
+  document.getElementById('q-total').textContent='$'+Math.round(total).toLocaleString();
+  document.getElementById('q-opps').textContent=opps.toLocaleString();
+  document.getElementById('q-avg').textContent='$'+avg.toLocaleString();
+  document.getElementById('q-ba').textContent=opps?((baR.length/opps)*100).toFixed(1)+'%':'--';
+  ['q-lbl1','q-lbl2','q-lbl3','q-lbl4','q-lbl5','q-lbl6','q-lbl7','q-lbl8','q-lbl9','q-lbl10','q-lbl11'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=CQ;});
+  drawMonthly('q1',aggMonthly(qRows));drawHBar('q2',aggType(qRows),'type','d',ORANGE,true,0);
+  drawHBar('q4',aggCoach(qRows),'name','total',NAVY,false);drawPCSMRanked('q3',aggPCSM(qRows),avg);
+  drawBA('q5',aggBA(qRows));drawNN('q6',aggNN(qRows));drawMix('q7',aggMix(qRows));
+}
+
+function populatePCSMDropdown(){const sel=document.getElementById('pcsmSel');const cur=sel.value;while(sel.options.length>1)sel.remove(1);uniq('PCSM').forEach(n=>sel.add(new Option(n,n)));if(cur)sel.value=cur;}
+function populateCoachDropdown(){const sel=document.getElementById('coachSel');const cur=sel.value;while(sel.options.length>1)sel.remove(1);uniq('Coach').forEach(n=>sel.add(new Option(n,n)));if(cur)sel.value=cur;}
+
+function fmtDate(v){
+  if(!v)return '—';
+  const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m)return parseInt(m[2])+'/'+parseInt(m[3])+'/'+m[1];
+  const d=new Date(v);
+  if(isNaN(d.getTime()))return String(v);
+  return (d.getMonth()+1)+'/'+(d.getDate())+'/'+d.getFullYear();
+}
+function buildGrowthLog(rows){
+  const sorted=[...rows].sort((a,b)=>{
+    const da=new Date(a['Date SaaS Growth Occured']),db=new Date(b['Date SaaS Growth Occured']);
+    const va=isNaN(da.getTime())?999999:da.getTime(),vb=isNaN(db.getTime())?999999:db.getTime();
+    if(va!==vb)return va-vb;
+    const ai=MONTH_ORDER.indexOf(a['Month Impacted']),bi=MONTH_ORDER.indexOf(b['Month Impacted']);
+    return(ai===-1?99:ai)-(bi===-1?99:bi);
+  });
+  const byQ={};
+  sorted.forEach((r,i)=>{const q=(r['Quarter']||'').trim();if(!byQ[q])byQ[q]=[];byQ[q].push(i);});
+  const threshIdx={};
+  Object.values(byQ).forEach(indices=>{
+    const byAmt=[...indices].sort((ia,ib)=>(Number(sorted[ia]['SaaS Growth'])||0)-(Number(sorted[ib]['SaaS Growth'])||0));
+    byAmt.slice(0,3).forEach((idx,rank)=>{threshIdx[idx]=rank+1;});
+  });
+  const qKickSeq={};
+  return sorted.map((r,i)=>{
+    const q=(r['Quarter']||'').trim();
+    const gt=(r['SaaS Growth Type']||'').trim();
+    const amt=Number(r['SaaS Growth'])||0;
+    const tRank=threshIdx[i];
+    const isKicker=tRank===undefined;
+    let statusLabel,statusColor,payout;
+    if(!isKicker){
+      statusLabel=tRank+'/3 — lowest amounts';
+      statusColor='#A0AEC0';payout=0;
+    }else{
+      if(!qKickSeq[q])qKickSeq[q]=0;
+      qKickSeq[q]++;
+      statusLabel='Kicker #'+qKickSeq[q];
+      statusColor='#2D9D6A';
+      payout=getKickerRate(gt,amt);
+    }
+    return{q,date:fmtDate(r['Date SaaS Growth Occured']),account:(r['Account name']||'').trim(),gt,amt,statusLabel,statusColor,payout,isKicker};
+  });
+}
+function renderPCSM(){
+  const pcsm=document.getElementById('pcsmSel').value,cont=document.getElementById('pcsm-content'),isQTD=pcsmPeriod==='qtd';
+  if(!pcsm){cont.innerHTML='<div class="empty-state"><h3>Select an employee above</h3></div>';return;}
+  const allR=DATA.filter(r=>r['PCSM']===pcsm),rows=isQTD?allR.filter(r=>r['Quarter']===CQ):allR;
+  const total=rows.reduce((s,r)=>s+(Number(r['SaaS Growth'])||0),0),opps=rows.length,avg=opps?Math.round(total/opps):0;
+  const ta=aggType(rows),coach=allR[0]?.['Coach']||'--';
+  const br=rows.filter(r=>{const b=(r['Was the BA on Recommendation Call']||'').toLowerCase();return b==='yes'||b.includes('recommendation');});
+  const baRate=opps?((br.length/opps)*100).toFixed(0)+'%':'--';
+  const kickers=isQTD?calcKicker(opps):null;
+  const kPayout=isQTD?calcQtdPayout(pcsm,CQ):0;
+  const kTile=isQTD?`<div class="kpi kicker-tile"><div class="kpi-val ${kickers===0?'zero':''}">${kickers}</div><div class="kpi-lbl kl">Kickers Earned</div><div class="kpi-sub ks">${kickers===0?'Need '+(4-Math.min(opps,3))+' more opps':'Above threshold'}</div></div><div class="kpi" style="background:#F0FFF8;border:1.5px solid #C6F6D5"><div class="kpi-val" style="color:#2D9D6A">${kPayout>0?'$'+kPayout.toLocaleString():'$0'}</div><div class="kpi-lbl">QTD Kicker Payout</div><div class="kpi-sub">${kPayout>0?'Qualifying growth types':'No qualifying growth types yet'}</div></div>`:'';
+  const grid=isQTD?'kpi-row-6':'kpi-row';
+  const log=buildGrowthLog(rows);
+  const logTotalPayout=log.reduce((s,r)=>s+r.payout,0);
+  const logTbody=log.map((r,i)=>{
+    const rowBg=r.isKicker&&r.payout>0?'background:#F8FFFC':'';
+    const qTd=!isQTD?`<td style="font-size:11px;color:#A0AEC0">${r.q}</td>`:'';
+    const payClr=r.payout>0?'#2D9D6A':r.isKicker?'#A0AEC0':'#E2E8F0';
+    const payTxt=r.payout>0?'$'+r.payout.toLocaleString():r.isKicker?'$0':'—';
+    return`<tr style="${rowBg}"><td style="color:#A0AEC0;font-size:11px;text-align:center">${i+1}</td><td style="font-size:12px;color:#718096;white-space:nowrap">${r.date}</td>${qTd}<td style="font-size:12px;color:#718096">${r.account||'—'}</td><td style="font-size:12px;color:#0F1735">${r.gt||'—'}</td><td style="font-size:12px;font-weight:600;text-align:right;color:#0F1735">$${r.amt.toLocaleString()}</td><td style="text-align:center"><span style="font-size:11px;font-weight:600;color:${r.statusColor}">${r.statusLabel}</span></td><td style="text-align:right;font-weight:700;font-size:12px;color:${payClr}">${payTxt}</td></tr>`;
+  }).join('');
+  const logCols=isQTD?6:7;
+  const logFoot=logTotalPayout>0?`<tfoot><tr style="background:#F5F7FA"><td colspan="${logCols}" style="text-align:right;font-size:12px;font-weight:700;color:#718096;padding:10px 14px">Total Kicker Payout</td><td style="text-align:right;font-weight:700;color:#2D9D6A;padding:10px 14px">$${logTotalPayout.toLocaleString()}</td></tr></tfoot>`:'';
+  const logSection=`<div class="grid" style="grid-template-columns:1fr"><div class="panel full"><div class="panel-title">Growth Detail — ${isQTD?CQ:'YTD'}</div><div class="panel-sub">Every growth in order by date. The 3 lowest-dollar amounts each quarter are the threshold (no payout). All others earn a kicker for qualifying types.</div><table class="log-table"><thead><tr><th style="text-align:center">#</th><th>Date</th>${!isQTD?'<th>Quarter</th>':''}<th>Account</th><th>Growth Type</th><th style="text-align:right">Amount</th><th style="text-align:center">Threshold Status</th><th style="text-align:right">Kicker Payout</th></tr></thead><tbody>${logTbody}</tbody>${logFoot}</table></div></div>`;
+  cont.innerHTML=`<div class="${grid}"><div class="kpi"><div class="kpi-val">$${Math.round(total).toLocaleString()}</div><div class="kpi-lbl">Total Growth${isQTD?` <span class="qtd-label">${CQ}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">${opps}</div><div class="kpi-lbl">Opportunities${isQTD?` <span class="qtd-label">${CQ}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">$${avg.toLocaleString()}</div><div class="kpi-lbl">Avg Deal Size</div></div><div class="kpi"><div class="kpi-val">${baRate}</div><div class="kpi-lbl">BA Rate</div></div>${kTile}</div><div class="grid"><div class="panel full"><div style="font-size:12px;color:#718096">Coach: <strong style="color:#0F1735">${coach}</strong>&nbsp;&nbsp;\xb7&nbsp;&nbsp;Top Type: <strong style="color:#FF5000">${ta[0]?.type||'--'}</strong></div></div><div class="panel full"><div class="panel-title">${isQTD?CQ+' ':''}Monthly Growth — ${pcsm}</div><svg id="pc1" height="210"></svg></div><div class="panel"><div class="panel-title">Growth by Type</div><svg id="pc2" height="280"></svg></div><div class="panel"><div class="panel-title">Net New vs. Upgrades</div><svg id="pc6" height="280"></svg></div></div>${logSection}`;
+  requestAnimationFrame(()=>{drawMonthly('pc1',aggMonthly(rows));drawHBar('pc2',ta,'type','d',ORANGE,true);drawNN('pc6',aggNN(rows));});
+}
+
+function renderCoach(){
+  const coach=document.getElementById('coachSel').value,cont=document.getElementById('coach-content'),isQTD=coachPeriod==='qtd';
+  if(!coach){cont.innerHTML='<div class="empty-state"><h3>Select a coach above</h3></div>';return;}
+  const allR=DATA.filter(r=>r['Coach']===coach),rows=isQTD?allR.filter(r=>r['Quarter']===CQ):allR;
+  const total=rows.reduce((s,r)=>s+(Number(r['SaaS Growth'])||0),0),opps=rows.length,avg=opps?Math.round(total/opps):0;
+  const pcsms=aggPCSM(rows),pcsmCount=[...new Set(allR.map(r=>r['PCSM']))].length;
+  cont.innerHTML=`<div class="kpi-row"><div class="kpi"><div class="kpi-val">$${Math.round(total).toLocaleString()}</div><div class="kpi-lbl">Total Growth${isQTD?` <span class="qtd-label">${CQ}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">${opps}</div><div class="kpi-lbl">Opportunities${isQTD?` <span class="qtd-label">${CQ}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">$${avg.toLocaleString()}</div><div class="kpi-lbl">Avg Deal Size</div></div><div class="kpi"><div class="kpi-val">${pcsmCount}</div><div class="kpi-lbl">Active PCSMs</div></div></div><div class="grid"><div class="panel full"><div class="panel-title">${isQTD?CQ+' ':''}Monthly Growth — ${coach} Team</div><svg id="cc1" height="210"></svg></div><div class="panel"><div class="panel-title">PCSM Rankings${isQTD?` <span class="qtd-label">${CQ}</span>`:''}</div><svg id="cc2" height="310"></svg></div><div class="panel"><div class="panel-title">Growth by Type</div><svg id="cc3" height="310"></svg></div></div>`;
+  requestAnimationFrame(()=>{drawMonthly('cc1',aggMonthly(rows));drawHBar('cc2',pcsms,'name','total',NAVY,false);drawHBar('cc3',aggType(rows),'type','d',ORANGE,true);});
+}
+
+function renderKickers(){
+  const cont=document.getElementById('kickers-content');
+  if(!DATA.length){cont.innerHTML='<div class="empty-state"><h3>No data loaded</h3></div>';return;}
+  const allP={};
+  DATA.forEach(r=>{const p=(r['PCSM']||'').trim(),c=(r['Coach']||'').trim();if(p&&!allP[p])allP[p]={coach:c,opps:0};});
+  DATA.filter(r=>r['Quarter']===CQ).forEach(r=>{const p=(r['PCSM']||'').trim();if(allP[p])allP[p].opps++;});
+  const kData=Object.entries(allP).map(([name,v])=>{
+    const payout=calcQtdPayout(name,CQ);
+    return{name,coach:v.coach,opps:v.opps,kickers:calcKicker(v.opps),payout,noQ2:v.opps===0};
+  }).sort((a,b)=>b.kickers-a.kickers||b.opps-a.opps);
+  const totalK=kData.reduce((s,d)=>s+d.kickers,0);
+  const qualified=kData.filter(d=>d.kickers>0).length;
+  const noQ2=kData.filter(d=>d.noQ2).length;
+  const totalPayout=kData.reduce((s,d)=>s+d.payout,0);
+  const tc=d=>{
+    if(d.noQ2)return'<span style="color:#A0AEC0;font-style:italic">No Q2 activity</span>';
+    if(d.kickers>0)return'<span style="color:#2D9D6A;font-weight:700">&#10003; Qualified</span>';
+    return`<span style="color:#A0AEC0">${d.opps}/3 &mdash; ${4-d.opps} more to qualify</span>`;
+  };
+  const trows=kData.map((d,i)=>`<tr style="${d.noQ2?'opacity:.5':''}"><td><strong>${i+1}</strong></td><td><strong style="color:#0F1735">${d.name}</strong></td><td style="color:#718096">${d.coach}</td><td style="text-align:center">${d.noQ2?'<span style="color:#A0AEC0">0</span>':d.opps}</td><td style="text-align:center">${tc(d)}</td><td style="text-align:center">${d.kickers>0?'<span class="badge-kicker">'+d.kickers+'</span>':'<span class="badge-zero">0</span>'}</td><td style="text-align:center;font-weight:700;color:${d.payout>0?'#2D9D6A':'#A0AEC0'}">${d.payout>0?'$'+d.payout.toLocaleString():'&mdash;'}</td></tr>`).join('');
+  cont.innerHTML=`<div class="kpi-row-5">
+    <div class="kpi"><div class="kpi-val">${totalK}</div><div class="kpi-lbl">Total Team Kickers <span class="qtd-label">${CQ}</span></div></div>
+    <div class="kpi"><div class="kpi-val">${qualified}</div><div class="kpi-lbl">Employees Qualified <span class="qtd-label">${CQ}</span></div></div>
+    <div class="kpi"><div class="kpi-val">${kData.length-qualified-noQ2}</div><div class="kpi-lbl">Working Toward Threshold</div></div>
+    <div class="kpi"><div class="kpi-val muted">${noQ2}</div><div class="kpi-lbl">No Q2 Activity</div><div class="kpi-sub">Active in Q1 — no Q2 entries yet</div></div>
+    <div class="kpi" style="background:#F0FFF8;border:1.5px solid #C6F6D5"><div class="kpi-val" style="color:#2D9D6A">$${totalPayout.toLocaleString()}</div><div class="kpi-lbl">Total Team Payout <span class="qtd-label">${CQ}</span></div><div class="kpi-sub">Qualifying growth types above threshold</div></div>
+  </div>
+  <div class="grid" style="grid-template-columns:1fr">
+    <div class="panel full">
+      <div class="panel-title">Kicker Tracker &mdash; ${CQ}</div>
+      <div class="panel-sub">All ${kData.length} employees shown. Kickers are earned for each growth opportunity above the 3-opp quarterly threshold. Payout applies to qualifying growth types (TL, SEO, Leads Lift, New MC, Social Ads) starting at the 4th opp. Grayed rows had Q1 activity but no Q2 entries yet.</div>
+      <table class="log-table">
+        <thead><tr><th>#</th><th>Employee</th><th>Coach</th><th style="text-align:center">QTD Opps</th><th style="text-align:center">Threshold Status</th><th style="text-align:center">Kickers Earned</th><th style="text-align:center">QTD Payout</th></tr></thead>
+        <tbody>${trows}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function renderLog(){
+  const cont=document.getElementById('logContent');if(!cont)return;
+  if(DATA_SOURCE==='auto'){
+    cont.innerHTML=`<div style="padding:16px 0;font-size:13px;color:#4A5568;line-height:2"><strong>Source:</strong> Auto-loaded from <code>data.xlsx</code> in the GitHub repo<br><strong>Loaded:</strong> ${DATA_TS||'This session'}<br><strong>Rows:</strong> ${DATA.length.toLocaleString()}<br><strong>To update for all users:</strong> In the GitHub repo, click <code>data.xlsx</code> &rarr; upload the new file &rarr; commit. The dashboard refreshes for everyone within ~60 seconds.</div>`;
+  } else if(DATA_SOURCE==='manual'){
+    cont.innerHTML=`<div style="padding:16px 0;font-size:13px;color:#4A5568;line-height:2"><strong>Source:</strong> Local preview (this browser session only)<br><strong>Rows:</strong> ${DATA.length.toLocaleString()}<br><em>This data is not visible to other users. To publish, replace <code>data.xlsx</code> in the GitHub repo.</em></div>`;
+  } else {
+    cont.innerHTML='<div class="log-empty">No data loaded.</div>';
+  }
+}
+
+function updateBadge(){
+  const dot=document.getElementById('dataDot'),lbl=document.getElementById('dataLabel'),lu=document.getElementById('lastUpdated');
+  if(DATA_SOURCE==='auto'&&DATA.length){dot.className='dot live';lbl.textContent=`Live · ${DATA.length.toLocaleString()} rows`;lu.textContent=DATA_TS||'This session';}
+  else if(DATA_SOURCE==='manual'&&DATA.length){dot.className='dot live';lbl.textContent=`Preview · ${DATA.length.toLocaleString()} rows`;lu.textContent='Local preview';}
+  else{dot.className='dot sample';lbl.textContent='No data file in repo';lu.textContent='Add data.xlsx to GitHub to activate';}
+}
+
+function showTab(name,el){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.pane').forEach(x=>x.classList.remove('active'));
+  if(el)el.classList.add('active');
+  document.getElementById('pane-'+name).classList.add('active');
+  if(name==='qtd')requestAnimationFrame(()=>requestAnimationFrame(()=>renderQTD()));
+  if(name==='pcsm'){populatePCSMDropdown();renderPCSM();}
+  if(name==='coach'){populateCoachDropdown();renderCoach();}
+  if(name==='kickers')renderKickers();
+  if(name==='log')renderLog();
+}
+
+function toggleUpload(){document.getElementById('uploadBar').classList.toggle('open');}
+
+// XLSX parser
+async function readEntry(u8,dv,entry){
+  const lp=entry.localOffset,lnl=dv.getUint16(lp+26,true),lel=dv.getUint16(lp+28,true);
+  const start=lp+30+lnl+lel,compressed=u8.slice(start,start+entry.compSize);
+  if(entry.compression===0)return compressed;
+  const ds=new DecompressionStream('deflate-raw'),wr=ds.writable.getWriter(),rd=ds.readable.getReader();
+  wr.write(compressed);wr.close();
+  const chunks=[];while(true){const{done,value}=await rd.read();if(done)break;chunks.push(value);}
+  const tot=chunks.reduce((s,c)=>s+c.length,0),out=new Uint8Array(tot);let off=0;
+  for(const c of chunks){out.set(c,off);off+=c.length;}return out;
+}
+
+async function parseXLSX(buf){
+  const u8=new Uint8Array(buf),dv=new DataView(buf),dec=new TextDecoder();
+  let eocd=-1;
+  for(let i=u8.length-22;i>=Math.max(0,u8.length-65557);i--){if(dv.getUint32(i,true)===0x06054b50){eocd=i;break;}}
+  if(eocd<0)throw new Error('Not a valid ZIP/XLSX');
+  const cdOff=dv.getUint32(eocd+16,true),cdSize=dv.getUint32(eocd+12,true);
+  const files={};let pos=cdOff;
+  while(pos<cdOff+cdSize&&pos<u8.length-46){
+    if(dv.getUint32(pos,true)!==0x02014b50)break;
+    const comp=dv.getUint16(pos+10,true),csz=dv.getUint32(pos+20,true);
+    const nl=dv.getUint16(pos+28,true),el=dv.getUint16(pos+30,true),cl=dv.getUint16(pos+32,true);
+    const lo=dv.getUint32(pos+42,true),name=dec.decode(u8.slice(pos+46,pos+46+nl));
+    files[name]={compression:comp,compSize:csz,localOffset:lo};pos+=46+nl+el+cl;
+  }
+  let strings=[];
+  if(files['xl/sharedStrings.xml']){const raw=await readEntry(u8,dv,files['xl/sharedStrings.xml']);const doc=new DOMParser().parseFromString(dec.decode(raw),'text/xml');strings=[...doc.querySelectorAll('si')].map(si=>[...si.querySelectorAll('t')].map(x=>x.textContent).join(''));}
+  let target='xl/worksheets/sheet2.xml';
+  if(files['xl/workbook.xml']){const raw=await readEntry(u8,dv,files['xl/workbook.xml']);const doc=new DOMParser().parseFromString(dec.decode(raw),'text/xml');[...doc.querySelectorAll('sheet')].forEach((sh,i)=>{if(sh.getAttribute('name')==='SaaS Growth detail')target=`xl/worksheets/sheet${i+1}.xml`;});}
+  if(!files[target])throw new Error('"SaaS Growth detail" sheet not found');
+  const raw=await readEntry(u8,dv,files[target]);
+  const doc=new DOMParser().parseFromString(dec.decode(raw),'text/xml');
+  const rowEls=[...doc.querySelectorAll('row')];if(!rowEls.length)throw new Error('No rows found');
+  const hdrs={};
+  for(const cell of rowEls[0].querySelectorAll('c')){const ref=cell.getAttribute('r').replace(/\d+/,''),tp=cell.getAttribute('t'),v=cell.querySelector('v');if(!v)continue;let val=v.textContent;if(tp==='s')val=strings[+val]||val;hdrs[ref]=val;}
+  const rows=[];
+  for(let ri=1;ri<rowEls.length;ri++){
+    const obj={};
+        for(const cell of rowEls[ri].querySelectorAll('c')){const ref=cell.getAttribute('r'),col=ref.replace(/\d+/,''),hdr=hdrs[col];if(!hdr)continue;const tp=cell.getAttribute('t'),v=cell.querySelector('v');if(!v){obj[hdr]='';continue;}let val=v.textContent;if(tp==='s')val=strings[+val]||val;else if(tp!=='str'){const n=parseFloat(val);if(!isNaN(n))val=n;}obj[hdr]=val;}
+    if(Object.keys(obj).length>3)rows.push(obj);
+  }
+  return rows;
+}
+
+// Auto-load from GitHub repo
+async function autoLoad(){
+  document.getElementById('loadingOverlay').classList.add('show');
+  document.getElementById('loadingMsg').textContent='Loading dashboard data...';
+  try{
+    DATA=__EMBEDDED_DATA__;
+    DATA_SOURCE='auto';
+    DATA_TS='@@TIMESTAMP@@';
+  }catch(e){
+    DATA=[];DATA_SOURCE='nofile';
+    document.getElementById('hdrDesc').textContent='Data error: '+e.message;
+  }
+  document.getElementById('loadingOverlay').classList.remove('show');
+  updateBadge();renderLog();
+  if(DATA.length)requestAnimationFrame(()=>requestAnimationFrame(()=>renderSummary()));
+}
+
+// Local preview upload
+async function handleFiles(files){
+  const file=files[0];if(!file)return;
+  const zone=document.getElementById('dropZone');
+  zone.querySelector('p').textContent='Parsing '+file.name+'...';
+  try{
+    DATA=await parseXLSX(await file.arrayBuffer());
+    DATA_SOURCE='manual';DATA_TS='Local preview';
+    zone.querySelector('p').textContent='Preview loaded: '+DATA.length+' rows from '+file.name;
+    zone.querySelector('small').textContent='Local preview only — this does not update the shared dashboard.';
+    updateBadge();renderLog();
+    showTab('summary',document.querySelector('.tab'));
+    document.querySelector('.tab').classList.add('active');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>renderSummary()));
+  }catch(err){zone.querySelector('p').textContent='Error: '+err.message;console.error(err);}
+  document.getElementById('fileInput').value='';
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  autoLoad();
+  let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{const id=document.querySelector('.pane.active')?.id;if(id==='pane-summary')renderSummary();else if(id==='pane-qtd')renderQTD();else if(id==='pane-pcsm')renderPCSM();else if(id==='pane-coach')renderCoach();},200);});
+});
+</script>
+</body>
+</html>
