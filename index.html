@@ -517,7 +517,7 @@ function renderTypeTable(containerId,rows){
   const tdS='font-size:13px;color:#4A5568;padding:8px 14px;border-bottom:1px solid #F0F4F8;text-align:right';
   const nameS='font-size:13px;color:#0F1735;font-weight:600;padding:8px 14px;border-bottom:1px solid #F0F4F8';
   const mkRow=(label,q1d,q2d,ytdd,bold)=>{
-    const b=bold?'font-weight:700;':'';
+    const b=bold?';font-weight:700;':'';
     return '<tr>'
       +'<td style="'+nameS+b+'">'+label+'</td>'
       +'<td style="'+tdS+b+'">'+q1d.o+'</td>'
