@@ -129,6 +129,7 @@ svg{display:block;width:100%}
   <div class="tab" onclick="showTab('pcsm',this)">By Employee</div>
   <div class="tab" onclick="showTab('coach',this)">By Coach</div>
   <div class="tab" onclick="showTab('kickers',this)">Kickers</div>
+  <div class="tab" onclick="showTab('rawdata',this)">Raw Data</div>
   <div class="tab" onclick="showTab('log',this)">Data Source</div>
 </div>
 
@@ -205,6 +206,18 @@ svg{display:block;width:100%}
 
 <div class="pane" id="pane-kickers"><div style="display:flex;align-items:center;gap:12px;padding:18px 36px 0"><label style="font-size:12px;font-weight:700;color:#0F1735;letter-spacing:.5px;text-transform:uppercase">Quarter</label><select id="kickersQtrSel" onchange="setKickersQtr(this.value)" style="font-size:13px;font-weight:600;color:#0F1735;border:1.5px solid #E2E8F0;border-radius:6px;padding:6px 12px;background:white;cursor:pointer;outline:none;min-width:110px"></select></div><div id="kickers-content"></div></div>
 
+<div class="pane" id="pane-rawdata">
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:18px 36px 12px">
+    <select id="rdCoach" onchange="setRDFilter('coach',this.value)" style="font-size:12px;border:1.5px solid #DFE4ED;border-radius:7px;padding:7px 12px;background:white;cursor:pointer;color:#0F1735;min-width:150px"><option value="">All Coaches</option></select>
+    <select id="rdPCSM" onchange="setRDFilter('pcsm',this.value)" style="font-size:12px;border:1.5px solid #DFE4ED;border-radius:7px;padding:7px 12px;background:white;cursor:pointer;color:#0F1735;min-width:160px"><option value="">All Employees</option></select>
+    <select id="rdQtr" onchange="setRDFilter('quarter',this.value)" style="font-size:12px;border:1.5px solid #DFE4ED;border-radius:7px;padding:7px 12px;background:white;cursor:pointer;color:#0F1735;min-width:110px"><option value="">All Quarters</option></select>
+    <input id="rdSearch" type="text" placeholder="Search account or employee..." oninput="setRDFilter('search',this.value)" style="font-size:12px;border:1.5px solid #DFE4ED;border-radius:7px;padding:7px 12px;color:#0F1735;min-width:220px;outline:none">
+    <span id="rdCount" style="font-size:12px;color:#718096;margin-left:auto;white-space:nowrap"></span>
+    <button onclick="clearRDFilters()" style="font-size:11px;font-weight:700;color:#718096;background:white;border:1.5px solid #DFE4ED;border-radius:7px;padding:7px 14px;cursor:pointer;text-transform:uppercase;letter-spacing:.3px">Clear</button>
+    <button onclick="exportRDCSV()" style="font-size:11px;font-weight:700;color:#FF5000;background:rgba(255,80,0,.08);border:1.5px solid rgba(255,80,0,.3);border-radius:7px;padding:7px 14px;cursor:pointer;text-transform:uppercase;letter-spacing:.3px">&#8595; Export CSV</button>
+  </div>
+  <div style="padding:0 36px 36px" id="rd-table-cont"></div>
+</div>
 <div class="pane" id="pane-log">
   <div class="grid" style="grid-template-columns:1fr">
     <div class="panel full"><div class="panel-title">Data Source</div><div id="logContent"></div></div>
@@ -730,6 +743,88 @@ function updateBadge(){
   else{dot.className='dot sample';lbl.textContent='No data file in repo';lu.textContent='Add data.xlsx to GitHub to activate';}
 }
 
+const RD_COLS=[
+  {key:'Date SaaS Growth Occured',label:'Date'},
+  {key:'Account name',label:'Account'},
+  {key:'PCSM',label:'Employee'},
+  {key:'Coach',label:'Coach'},
+  {key:'Quarter',label:'Quarter'},
+  {key:'Month Impacted',label:'Month'},
+  {key:'SaaS Growth Type',label:'Growth Type'},
+  {key:'Type of Increase',label:'Type'},
+  {key:'Old SaaS Dollars',label:'Old SaaS $',num:true},
+  {key:'SaaS Growth',label:'Growth $',num:true},
+  {key:'New SaaS Dollars',label:'New SaaS $',num:true},
+  {key:'Was the BA on Recommendation Call',label:'BA on Call'},
+];
+let rdFilters={coach:'',pcsm:'',quarter:'',search:''};
+let rdSort={col:'Date SaaS Growth Occured',dir:1};
+
+function getRDRows(){
+  let rows=[...DATA];
+  if(rdFilters.coach)rows=rows.filter(r=>r['Coach']===rdFilters.coach);
+  if(rdFilters.pcsm)rows=rows.filter(r=>r['PCSM']===rdFilters.pcsm);
+  if(rdFilters.quarter)rows=rows.filter(r=>r['Quarter']===rdFilters.quarter);
+  if(rdFilters.search){const s=rdFilters.search.toLowerCase();rows=rows.filter(r=>(r['Account name']||'').toLowerCase().includes(s)||(r['PCSM']||'').toLowerCase().includes(s));}
+  if(rdSort.col){rows.sort((a,b)=>{const va=a[rdSort.col]??'',vb=b[rdSort.col]??'';if(typeof va==='number'&&typeof vb==='number')return(va-vb)*rdSort.dir;return String(va).localeCompare(String(vb))*rdSort.dir;});}
+  return rows;
+}
+function sortRD(col){if(rdSort.col===col)rdSort.dir*=-1;else{rdSort.col=col;rdSort.dir=1;}renderRawData();}
+function setRDFilter(key,val){rdFilters[key]=val;renderRawData();}
+function clearRDFilters(){
+  rdFilters={coach:'',pcsm:'',quarter:'',search:''};
+  ['rdCoach','rdPCSM','rdQtr'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const s=document.getElementById('rdSearch');if(s)s.value='';
+  renderRawData();
+}
+function exportRDCSV(){
+  const rows=getRDRows();
+  const header=RD_COLS.map(c=>'"'+c.label+'"').join(',');
+  const body=rows.map(r=>RD_COLS.map(c=>{
+    let v=r[c.key];if(v===undefined||v===null||v==='')v='';
+    if(c.key==='Date SaaS Growth Occured'&&v){const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)v=parseInt(m[2])+'/'+parseInt(m[3])+'/'+m[1];}
+    return'"'+String(v).replace(/"/g,'""')+'"';
+  }).join(',')).join('
+');
+  const blob=new Blob([header+'
+'+body],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='saas-growth-data.csv';a.click();URL.revokeObjectURL(a.href);
+}
+function renderRawData(){
+  if(!DATA.length)return;
+  const rows=getRDRows();
+  const rdCoach=document.getElementById('rdCoach'),rdPCSM=document.getElementById('rdPCSM'),rdQtr=document.getElementById('rdQtr');
+  if(rdCoach&&rdCoach.options.length===1){uniq('Coach').forEach(v=>rdCoach.add(new Option(v,v)));}
+  if(rdPCSM&&rdPCSM.options.length===1){uniq('PCSM').forEach(v=>rdPCSM.add(new Option(v,v)));}
+  if(rdQtr&&rdQtr.options.length===1){getAvailableQuarters().forEach(v=>rdQtr.add(new Option(v,v)));}
+  const cnt=document.getElementById('rdCount');
+  if(cnt)cnt.textContent='Showing '+rows.length.toLocaleString()+' of '+DATA.length.toLocaleString()+' rows';
+  const thS='font-size:11px;font-weight:700;color:#0F1735;text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;background:#F5F7FA;border-bottom:2px solid #DFE4ED;white-space:nowrap;cursor:pointer;user-select:none;position:sticky;top:0';
+  const tdS='font-size:12px;color:#4A5568;padding:8px 12px;border-bottom:1px solid #F0F4F8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+  const arrow=col=>{if(rdSort.col!==col)return' <span style="color:#CBD5E0;font-size:10px">&#8597;</span>';return rdSort.dir===1?' <span style="color:#FF5000;font-size:10px">&#8595;</span>':' <span style="color:#FF5000;font-size:10px">&#8593;</span>';};
+  const colWidths={
+    'Date SaaS Growth Occured':'90px','Account name':'180px','PCSM':'130px','Coach':'120px',
+    'Quarter':'80px','Month Impacted':'90px','SaaS Growth Type':'160px','Type of Increase':'120px',
+    'Old SaaS Dollars':'90px','SaaS Growth':'90px','New SaaS Dollars':'90px','Was the BA on Recommendation Call':'80px'
+  };
+  const colgroup=RD_COLS.map(c=>'<col style="width:'+colWidths[c.key]+'">').join('');
+  const thead='<thead><tr>'+RD_COLS.map(c=>'<th style="'+thS+'" onclick="sortRD(''+c.key+'')">'+c.label+arrow(c.key)+'</th>').join('')+'</tr></thead>';
+  const displayed=rows.slice(0,1000);
+  const tbody='<tbody>'+displayed.map((r,i)=>{
+    const bg=i%2===0?'':'background:#FAFBFC';
+    return'<tr style="'+bg+'">'+RD_COLS.map(c=>{
+      let v=r[c.key];if(v===undefined||v===null||v==='')v='—';
+      if(c.key==='Date SaaS Growth Occured'&&v!=='—'){const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)v=parseInt(m[2])+'/'+parseInt(m[3])+'/'+m[1];}
+      if(c.num&&typeof v==='number')v='$'+v.toLocaleString();
+      if(c.key==='Was the BA on Recommendation Call'&&v!=='—'){const low=String(v).toLowerCase();v=(low==='yes'||low.includes('recommendation'))?'<span style="color:#2D9D6A;font-weight:700">Yes</span>':'<span style="color:#A0AEC0">No</span>';}
+      const plain=String(v).replace(/<[^>]*>/g,'');
+      return'<td style="'+tdS+'" title="'+plain.replace(/"/g,"'")+'">'+v+'</td>';
+    }).join('')+'</tr>';
+  }).join('')+'</tbody>';
+  const over=rows.length>1000?'<div style="text-align:center;padding:14px;font-size:12px;color:#A0AEC0;border-top:1px solid #F0F4F8">Showing first 1,000 rows — use filters to narrow results</div>':'';
+  const cont=document.getElementById('rd-table-cont');
+  if(cont)cont.innerHTML='<div style="overflow-x:auto;overflow-y:auto;max-height:620px;border-radius:10px;border:1px solid #E2E8F0;box-shadow:0 1px 3px rgba(0,0,0,.06)"><table style="width:100%;border-collapse:collapse;table-layout:fixed"><colgroup>'+colgroup+'</colgroup>'+thead+tbody+'</table>'+over+'</div>';
+}
 function showTab(name,el){
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.pane').forEach(x=>x.classList.remove('active'));
@@ -739,6 +834,7 @@ function showTab(name,el){
   if(name==='pcsm'){populatePCSMDropdown();populateTabQtrDropdown('pcsmQtrSel',selectedPCSMQtr,q=>{selectedPCSMQtr=q;});renderPCSM();}
   if(name==='coach'){populateCoachDropdown();populateTabQtrDropdown('coachQtrSel',selectedCoachQtr,q=>{selectedCoachQtr=q;});renderCoach();}
   if(name==='kickers'){populateTabQtrDropdown('kickersQtrSel',selectedKickersQtr,q=>{selectedKickersQtr=q;});renderKickers();}
+  if(name==='rawdata')renderRawData();
   if(name==='log')renderLog();
 }
 
