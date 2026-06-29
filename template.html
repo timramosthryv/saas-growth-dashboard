@@ -147,6 +147,7 @@ svg{display:block;width:100%}
     <div class="panel"><div class="panel-title">BA Presence: Impact on Average Deal Size</div><svg id="c5" height="170"></svg><div class="caption" id="c5-cap"></div></div>
     <div class="panel"><div class="panel-title">Net New Adds vs. Upgrades and Expansions</div><svg id="c6" height="170"></svg><div class="caption" id="c6-cap"></div></div>
     <div class="panel full"><div class="panel-title">SaaS Growth Type Mix by Coach</div><svg id="c7" height="250"></svg><div class="legend"><div class="leg"><div class="leg-dot" style="background:#FF5000"></div>TL Increase</div><div class="leg"><div class="leg-dot" style="background:#E07B39"></div>New TL</div><div class="leg"><div class="leg-dot" style="background:#0F6B9E"></div>New Social Ads</div><div class="leg"><div class="leg-dot" style="background:#2D9D6A"></div>New SEO</div><div class="leg"><div class="leg-dot" style="background:#8B5CF6"></div>SEO Increase</div><div class="leg"><div class="leg-dot" style="background:#D4A017"></div>Leads Lift</div><div class="leg"><div class="leg-dot" style="background:#CBD5E0"></div>Other</div></div></div>
+    <div class="panel full"><div class="panel-title">Recurring vs. One-Time Growth</div><svg id="c8" height="200"></svg><div id="c8-table" style="margin-top:12px"></div><div class="legend" style="margin-top:8px"><div class="leg"><div class="leg-dot" style="background:#0F1735"></div>Recurring Charge</div><div class="leg"><div class="leg-dot" style="background:#FF5000"></div>One-Time Charge</div></div></div>
   </div>
 </div>
 
@@ -313,6 +314,19 @@ function aggNN(rows){
   rows.forEach(r=>{const old=Number(r['Old SaaS Dollars'])||0,v=Number(r['SaaS Growth'])||0;old>0?(uD+=v,uO++):(nD+=v,nO++);});
   const tD=uD+nD,tO=uO+nO;return{upD:tD?+((uD/tD)*100).toFixed(1):0,nnD:tD?+((nD/tD)*100).toFixed(1):0,upO:tO?+((uO/tO)*100).toFixed(1):0,nnO:tO?+((nO/tO)*100).toFixed(1):0};
 }
+function aggTypeOfIncrease(rows){
+  const TYPES=['Reoccurring Charge','One Time Charge'];
+  const result={};
+  MONTH_ORDER.forEach(mo=>{result[mo]={};TYPES.forEach(t=>{result[mo][t]={d:0,o:0};});});
+  rows.forEach(r=>{
+    const mo=r['Month Impacted']||'',tp=(r['Type of Increase']||'').trim(),v=Number(r['SaaS Growth'])||0;
+    if(!mo||!result[mo])return;
+    const key=TYPES.includes(tp)?tp:'Reoccurring Charge';
+    result[mo][key].d+=v;result[mo][key].o++;
+  });
+  const months=MONTH_ORDER.filter(mo=>rows.some(r=>r['Month Impacted']===mo));
+  return{months,result,types:TYPES};
+}
 function aggMix(rows){
   const m={};rows.forEach(r=>{const c=r['Coach']||'?',tp=r['SaaS Growth Type']||'Other',v=Number(r['SaaS Growth'])||0;if(!m[c])m[c]={};m[c][tp]=(m[c][tp]||0)+v;});
   return Object.entries(m).map(([name,types])=>{
@@ -452,6 +466,75 @@ function drawNN(id,nn){
   });
 }
 
+function drawTypeOfIncrease(id,data){
+  const el=document.getElementById(id);if(!el)return;el.replaceChildren();
+  if(!data||!data.months.length){return;}
+  const {months,result,types}=data;
+  const W=svgW(id),H=+el.getAttribute('height')||200;el.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const COLORS=[NAVY,ORANGE];
+  const n=months.length,gW=Math.min(W/(n+1),90),bW=gW*0.35,gap=2;
+  const P={t:24,r:12,b:36,l:56};
+  const CW=W-P.l-P.r,CH=H-P.t-P.b;
+  const step=CW/n;
+  const maxVal=Math.max(...months.flatMap(mo=>types.map(tp=>result[mo][tp].d)))*1.15||1;
+  [0,.25,.5,.75,1].forEach(f=>{
+    const v=maxVal*f,y=P.t+CH-f*CH;
+    s('line',{x1:P.l,y1:y,x2:P.l+CW,y2:y,stroke:GRAY,'stroke-width':1},el);
+    t(el,P.l-5,y+4,fmtK(v),{'text-anchor':'end',fill:MUTED,'font-size':10});
+  });
+  months.forEach((mo,i)=>{
+    const cx=P.l+i*step+step/2;
+    types.forEach((tp,j)=>{
+      const v=result[mo][tp].d,bh=(v/maxVal)*CH;
+      const x=cx+(j===0?-bW-gap/2:gap/2);
+      const y=P.t+CH-bh;
+      s('rect',{x,y,width:bW,height:bh,fill:COLORS[j],rx:2,opacity:0.9},el);
+      if(bh>16)t(el,x+bW/2,y+12,fmtK(v),{'text-anchor':'middle',fill:'white','font-size':9,'font-weight':700});
+    });
+    const label=mo.replace(' 2026','').replace('Jun','Jun*');
+    t(el,cx,P.t+CH+14,label,{'text-anchor':'middle',fill:BODY,'font-size':11});
+  });
+}
+function renderTypeTable(containerId,rows){
+  const el=document.getElementById(containerId);if(!el)return;
+  const TYPES=['Reoccurring Charge','One Time Charge'];
+  const quarters=[...new Set(rows.map(r=>(r['Quarter']||'').trim()).filter(Boolean))].sort();
+  const agg=(filterFn)=>{
+    const f=rows.filter(filterFn);
+    return TYPES.map(tp=>{const r2=f.filter(r=>(r['Type of Increase']||'').trim()===tp);return{tp,o:r2.length,d:r2.reduce((s,r)=>s+(Number(r['SaaS Growth'])||0),0)};});
+  };
+  const q1rows=rows.filter(r=>r['Quarter']==='Q1 2026'),q2rows=rows.filter(r=>r['Quarter']==='Q2 2026');
+  const q1=agg(r=>r['Quarter']==='Q1 2026'),q2=agg(r=>r['Quarter']==='Q2 2026'),ytd=agg(()=>true);
+  const totQ1={o:q1rows.length,d:q1rows.reduce((s,r)=>s+(Number(r['SaaS Growth'])||0),0)};
+  const totQ2={o:q2rows.length,d:q2rows.reduce((s,r)=>s+(Number(r['SaaS Growth'])||0),0)};
+  const totYTD={o:rows.length,d:rows.reduce((s,r)=>s+(Number(r['SaaS Growth'])||0),0)};
+  const thStyle='font-size:11px;font-weight:700;color:#0F1735;text-transform:uppercase;letter-spacing:.5px;text-align:right;padding:8px 14px;background:#F5F7FA;border-bottom:2px solid #DFE4ED';
+  const tdS='font-size:13px;color:#4A5568;padding:8px 14px;border-bottom:1px solid #F0F4F8;text-align:right';
+  const nameS='font-size:13px;color:#0F1735;font-weight:600;padding:8px 14px;border-bottom:1px solid #F0F4F8';
+  const mkRow=(label,q1d,q2d,ytdd,bold)=>{
+    const b=bold?'font-weight:700;':'';
+    return '<tr>'
+      +'<td style="'+nameS+b+'">'+label+'</td>'
+      +'<td style="'+tdS+b+'">'+q1d.o+'</td>'
+      +'<td style="'+tdS+b+'">$'+Math.round(q1d.d).toLocaleString()+'</td>'
+      +'<td style="'+tdS+b+'">'+q2d.o+'</td>'
+      +'<td style="'+tdS+b+'">$'+Math.round(q2d.d).toLocaleString()+'</td>'
+      +'<td style="'+tdS+b+'">'+ytdd.o+'</td>'
+      +'<td style="'+tdS+';color:#FF5000;'+b+'">$'+Math.round(ytdd.d).toLocaleString()+'</td>'
+      +'</tr>';
+  };
+  el.innerHTML='<table style="width:100%;border-collapse:collapse;margin-top:4px">'
+    +'<thead><tr>'
+    +'<th style="'+thStyle+';text-align:left">Type</th>'
+    +'<th style="'+thStyle+'">Q1 Opps</th><th style="'+thStyle+'">Q1 Growth $</th>'
+    +'<th style="'+thStyle+'">Q2 Opps</th><th style="'+thStyle+'">Q2 Growth $</th>'
+    +'<th style="'+thStyle+'">YTD Opps</th><th style="'+thStyle+'">YTD Growth $</th>'
+    +'</tr></thead><tbody>'
+    +mkRow('Recurring Charge',q1[0],q2[0],ytd[0],false)
+    +mkRow('One-Time Charge',q1[1],q2[1],ytd[1],false)
+    +mkRow('Total',totQ1,totQ2,totYTD,true)
+    +'</tbody></table>';
+}
 function drawMix(id,coaches){
   const el=svgEl(id);if(!el)return;el.replaceChildren();
   const W=svgW(id),H=+el.getAttribute('height')||250;el.setAttribute('viewBox',`0 0 ${W} ${H}`);
@@ -479,6 +562,7 @@ function renderSummary(){
   drawMonthly('c1',aggMonthly(DATA));drawHBar('c2',aggType(DATA),'type','d',ORANGE,true,0);
   drawCoachSlope('c4',aggCoachSlope(DATA));drawPCSMRanked('c3',aggPCSM(DATA),avg);
   drawBA('c5',ba);drawNN('c6',nn);drawMix('c7',aggMix(DATA));
+  drawTypeOfIncrease('c8',aggTypeOfIncrease(DATA));renderTypeTable('c8-table',DATA);
   const c5=document.getElementById('c5-cap');if(c5)c5.textContent=`BA presence correlates with a higher average deal ($${ba[0].avg.toLocaleString()} vs. $${ba[1].avg.toLocaleString()}). ${baR.length} of ${opps} opportunities included a BA.`;
   const c6=document.getElementById('c6-cap');if(c6)c6.textContent=`Upgrades generate ${nn.upD}% of all dollars across ${nn.upO}% of opportunities.`;
 }
