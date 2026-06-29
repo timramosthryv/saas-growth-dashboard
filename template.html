@@ -151,6 +151,10 @@ svg{display:block;width:100%}
 </div>
 
 <div class="pane" id="pane-qtd">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <label style="font-size:12px;font-weight:700;color:#0F1735;letter-spacing:.5px;text-transform:uppercase">Quarter</label>
+    <select id="qtdQuarterSel" onchange="setQTDQuarter(this.value)" style="font-size:13px;font-weight:600;color:#0F1735;border:1.5px solid #E2E8F0;border-radius:6px;padding:6px 12px;background:white;cursor:pointer;outline:none"></select>
+  </div>
   <div class="kpi-row">
     <div class="kpi"><div class="kpi-val" id="q-total">--</div><div class="kpi-lbl">Total SaaS Growth <span class="qtd-label" id="q-lbl1">QTD</span></div></div>
     <div class="kpi"><div class="kpi-val" id="q-opps">--</div><div class="kpi-lbl">Total Opportunities <span class="qtd-label" id="q-lbl2">QTD</span></div></div>
@@ -214,6 +218,16 @@ const SEG_COLORS=[ORANGE,'#E07B39','#0F6B9E',GREEN,'#8B5CF6',YELLOW,'#CBD5E0'];
 const SEG_LABELS=['TL Increase','New TL','New Thryv Social Ads','New SEO','SEO Increase','Leads Lift Upgrade'];
 function getCQ(){const d=new Date();return'Q'+Math.ceil((d.getMonth()+1)/3)+' '+d.getFullYear();}
 const CQ=getCQ();
+let selectedQTD=CQ;
+function setQTDQuarter(q){selectedQTD=q;renderQTD();}
+function populateQTDDropdown(){
+  const sel=document.getElementById('qtdQuarterSel');
+  if(!sel)return;
+  const quarters=[...new Set(DATA.map(r=>(r['Quarter']||'').trim()).filter(Boolean))].sort();
+  sel.innerHTML='';
+  quarters.forEach(q=>{const o=new Option(q,q);if(q===selectedQTD)o.selected=true;sel.add(o);});
+  if(!quarters.includes(selectedQTD)&&quarters.length){selectedQTD=quarters[quarters.length-1];sel.value=selectedQTD;}
+}
 let pcsmPeriod='ytd',coachPeriod='ytd',DATA=[],DATA_SOURCE='loading',DATA_TS=null;
 
 function setPcsmPeriod(p){pcsmPeriod=p;document.getElementById('pPeriodYTD').classList.toggle('active',p==='ytd');document.getElementById('pPeriodQTD').classList.toggle('active',p==='qtd');renderPCSM();}
@@ -453,14 +467,15 @@ function renderSummary(){
 
 function renderQTD(){
   if(!DATA.length)return;
-  const qRows=DATA.filter(r=>r['Quarter']===CQ);
+  populateQTDDropdown();
+  const qRows=DATA.filter(r=>r['Quarter']===selectedQTD);
   const total=qRows.reduce((s,r)=>s+(Number(r['SaaS Growth'])||0),0),opps=qRows.length,avg=opps?Math.round(total/opps):0;
   const baR=qRows.filter(r=>{const b=(r['Was the BA on Recommendation Call']||'').toLowerCase();return b==='yes'||b.includes('recommendation');});
   document.getElementById('q-total').textContent='$'+Math.round(total).toLocaleString();
   document.getElementById('q-opps').textContent=opps.toLocaleString();
   document.getElementById('q-avg').textContent='$'+avg.toLocaleString();
   document.getElementById('q-ba').textContent=opps?((baR.length/opps)*100).toFixed(1)+'%':'--';
-  ['q-lbl1','q-lbl2','q-lbl3','q-lbl4','q-lbl5','q-lbl6','q-lbl7','q-lbl8','q-lbl9','q-lbl10','q-lbl11'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=CQ;});
+  ['q-lbl1','q-lbl2','q-lbl3','q-lbl4','q-lbl5','q-lbl6','q-lbl7','q-lbl8','q-lbl9','q-lbl10','q-lbl11'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=selectedQTD;});
   drawMonthly('q1',aggMonthly(qRows));drawHBar('q2',aggType(qRows),'type','d',ORANGE,true,0);
   drawHBar('q4',aggCoach(qRows),'name','total',NAVY,false);drawPCSMRanked('q3',aggPCSM(qRows),avg);
   drawBA('q5',aggBA(qRows));drawNN('q6',aggNN(qRows));drawMix('q7',aggMix(qRows));
@@ -667,12 +682,29 @@ async function parseXLSX(buf){
   return rows;
 }
 
+// PCSM name normalization — maps old/misspelled names to canonical names
+const PCSM_NAME_MAP = {
+  'Glenys Rodriguez Gomez': 'Glenys Rodriguez',
+  'Holly Fatla':            'Holly Koehn',
+  'Nicole Ozoria':          'Nicole Ozoria Minaya',
+  'Aylin Kumcur':           'Aylin Kumcur Reyes',
+  'Yenifer Medina':         'Yenifer Medina Perez',
+  'Jonthan Miles':          'Jonathan Miles',
+};
+function normalizeData(rows){
+  return rows.map(r=>{
+    const raw=(r['PCSM']||'').trim();
+    if(PCSM_NAME_MAP[raw]) r=Object.assign({},r,{'PCSM':PCSM_NAME_MAP[raw]});
+    return r;
+  });
+}
+
 // Auto-load from GitHub repo
 async function autoLoad(){
   document.getElementById('loadingOverlay').classList.add('show');
   document.getElementById('loadingMsg').textContent='Loading dashboard data...';
   try{
-    DATA=__EMBEDDED_DATA__;
+    DATA=normalizeData(__EMBEDDED_DATA__);
     DATA_SOURCE='auto';
     DATA_TS='@@TIMESTAMP@@';
   }catch(e){
@@ -690,7 +722,7 @@ async function handleFiles(files){
   const zone=document.getElementById('dropZone');
   zone.querySelector('p').textContent='Parsing '+file.name+'...';
   try{
-    DATA=await parseXLSX(await file.arrayBuffer());
+    DATA=normalizeData(await parseXLSX(await file.arrayBuffer()));
     DATA_SOURCE='manual';DATA_TS='Local preview';
     zone.querySelector('p').textContent='Preview loaded: '+DATA.length+' rows from '+file.name;
     zone.querySelector('small').textContent='Local preview only — this does not update the shared dashboard.';
