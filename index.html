@@ -785,10 +785,8 @@ function exportRDCSV(){
     let v=r[c.key];if(v===undefined||v===null||v==='')v='';
     if(c.key==='Date SaaS Growth Occured'&&v){const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)v=parseInt(m[2])+'/'+parseInt(m[3])+'/'+m[1];}
     return'"'+String(v).replace(/"/g,'""')+'"';
-  }).join(',')).join('
-');
-  const blob=new Blob([header+'
-'+body],{type:'text/csv'});
+  }).join(',')).join('\n');
+  const blob=new Blob([header+'\n'+body],{type:'text/csv'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='saas-growth-data.csv';a.click();URL.revokeObjectURL(a.href);
 }
 function renderRawData(){
@@ -802,27 +800,39 @@ function renderRawData(){
   if(cnt)cnt.textContent='Showing '+rows.length.toLocaleString()+' of '+DATA.length.toLocaleString()+' rows';
   const thS='font-size:11px;font-weight:700;color:#0F1735;text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;background:#F5F7FA;border-bottom:2px solid #DFE4ED;white-space:nowrap;cursor:pointer;user-select:none;position:sticky;top:0';
   const tdS='font-size:12px;color:#4A5568;padding:8px 12px;border-bottom:1px solid #F0F4F8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
-  const arrow=col=>{if(rdSort.col!==col)return' <span style="color:#CBD5E0;font-size:10px">&#8597;</span>';return rdSort.dir===1?' <span style="color:#FF5000;font-size:10px">&#8595;</span>':' <span style="color:#FF5000;font-size:10px">&#8593;</span>';};
-  const colWidths={
-    'Date SaaS Growth Occured':'90px','Account name':'180px','PCSM':'130px','Coach':'120px',
-    'Quarter':'80px','Month Impacted':'90px','SaaS Growth Type':'160px','Type of Increase':'120px',
-    'Old SaaS Dollars':'90px','SaaS Growth':'90px','New SaaS Dollars':'90px','Was the BA on Recommendation Call':'80px'
+  const arrow=col=>{
+    if(rdSort.col!==col)return' <span style="color:#CBD5E0;font-size:10px">&#8597;</span>';
+    return rdSort.dir===1?' <span style="color:#FF5000;font-size:10px">&#8595;</span>':' <span style="color:#FF5000;font-size:10px">&#8593;</span>';
   };
-  const colgroup=RD_COLS.map(c=>'<col style="width:'+colWidths[c.key]+'">').join('');
-  const thead='<thead><tr>'+RD_COLS.map(c=>'<th style="'+thS+'" onclick="sortRD(''+c.key+'')">'+c.label+arrow(c.key)+'</th>').join('')+'</tr></thead>';
+  const colWidths={'Date SaaS Growth Occured':'90px','Account name':'180px','PCSM':'130px','Coach':'120px','Quarter':'80px','Month Impacted':'90px','SaaS Growth Type':'160px','Type of Increase':'120px','Old SaaS Dollars':'90px','SaaS Growth':'90px','New SaaS Dollars':'90px','Was the BA on Recommendation Call':'80px'};
+  const colgroup=RD_COLS.map(c=>`<col style="width:${colWidths[c.key]}">`).join('');
+  const thead='<thead><tr>'+RD_COLS.map(c=>{
+    const a=arrow(c.key);
+    return `<th style="${thS}" onclick="sortRD(this.dataset.col)" data-col="${c.key}">${c.label}${a}</th>`;
+  }).join('')+'</tr></thead>';
   const displayed=rows.slice(0,1000);
   const tbody='<tbody>'+displayed.map((r,i)=>{
     const bg=i%2===0?'':'background:#FAFBFC';
-    return'<tr style="'+bg+'">'+RD_COLS.map(c=>{
-      let v=r[c.key];if(v===undefined||v===null||v==='')v='—';
-      if(c.key==='Date SaaS Growth Occured'&&v!=='—'){const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)v=parseInt(m[2])+'/'+parseInt(m[3])+'/'+m[1];}
+    const cells=RD_COLS.map(c=>{
+      let v=r[c.key];
+      if(v===undefined||v===null||v==='')v='--';
+      if(c.key==='Date SaaS Growth Occured'&&v!=='--'){
+        const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if(m)v=parseInt(m[2])+'/'+parseInt(m[3])+'/'+m[1];
+      }
       if(c.num&&typeof v==='number')v='$'+v.toLocaleString();
-      if(c.key==='Was the BA on Recommendation Call'&&v!=='—'){const low=String(v).toLowerCase();v=(low==='yes'||low.includes('recommendation'))?'<span style="color:#2D9D6A;font-weight:700">Yes</span>':'<span style="color:#A0AEC0">No</span>';}
-      const plain=String(v).replace(/<[^>]*>/g,'');
-      return'<td style="'+tdS+'" title="'+plain.replace(/"/g,"'")+'">'+v+'</td>';
-    }).join('')+'</tr>';
+      if(c.key==='Was the BA on Recommendation Call'&&v!=='--'){
+        const low=String(v).toLowerCase();
+        v=(low==='yes'||low.includes('recommendation'))
+          ?'<span style="color:#2D9D6A;font-weight:700">Yes</span>'
+          :'<span style="color:#A0AEC0">No</span>';
+      }
+      const plain=String(v).replace(/<[^>]*>/g,'').replace(/"/g,"'");
+      return `<td style="${tdS}" title="${plain}">${v}</td>`;
+    }).join('');
+    return `<tr style="${bg}">${cells}</tr>`;
   }).join('')+'</tbody>';
-  const over=rows.length>1000?'<div style="text-align:center;padding:14px;font-size:12px;color:#A0AEC0;border-top:1px solid #F0F4F8">Showing first 1,000 rows — use filters to narrow results</div>':'';
+  const over=rows.length>1000?'<div style="text-align:center;padding:14px;font-size:12px;color:#A0AEC0;border-top:1px solid #F0F4F8">Showing first 1,000 rows &mdash; use filters to narrow results</div>':'';
   const cont=document.getElementById('rd-table-cont');
   if(cont)cont.innerHTML='<div style="overflow-x:auto;overflow-y:auto;max-height:620px;border-radius:10px;border:1px solid #E2E8F0;box-shadow:0 1px 3px rgba(0,0,0,.06)"><table style="width:100%;border-collapse:collapse;table-layout:fixed"><colgroup>'+colgroup+'</colgroup>'+thead+tbody+'</table>'+over+'</div>';
 }
