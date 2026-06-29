@@ -472,26 +472,30 @@ function drawTypeOfIncrease(id,data){
   const {months,result,types}=data;
   const W=svgW(id),H=+el.getAttribute('height')||200;el.setAttribute('viewBox',`0 0 ${W} ${H}`);
   const COLORS=[NAVY,ORANGE];
-  const n=months.length,gW=Math.min(W/(n+1),90),bW=gW*0.35,gap=2;
+  const n=months.length;
   const P={t:24,r:12,b:36,l:56};
   const CW=W-P.l-P.r,CH=H-P.t-P.b;
-  const step=CW/n;
-  const maxVal=Math.max(...months.flatMap(mo=>types.map(tp=>result[mo][tp].d)))*1.15||1;
+  const step=CW/n,bW=step*0.55;
+  const maxVal=Math.max(...months.map(mo=>types.reduce((s,tp)=>s+result[mo][tp].d,0)))*1.12||1;
   [0,.25,.5,.75,1].forEach(f=>{
     const v=maxVal*f,y=P.t+CH-f*CH;
     s('line',{x1:P.l,y1:y,x2:P.l+CW,y2:y,stroke:GRAY,'stroke-width':1},el);
     t(el,P.l-5,y+4,fmtK(v),{'text-anchor':'end',fill:MUTED,'font-size':10});
   });
   months.forEach((mo,i)=>{
-    const cx=P.l+i*step+step/2;
+    const cx=P.l+i*step+step/2,x=cx-bW/2;
+    let cumY=P.t+CH;
+    const total=types.reduce((s,tp)=>s+result[mo][tp].d,0);
     types.forEach((tp,j)=>{
-      const v=result[mo][tp].d,bh=(v/maxVal)*CH;
-      const x=cx+(j===0?-bW-gap/2:gap/2);
-      const y=P.t+CH-bh;
-      s('rect',{x,y,width:bW,height:bh,fill:COLORS[j],rx:2,opacity:0.9},el);
-      if(bh>16)t(el,x+bW/2,y+12,fmtK(v),{'text-anchor':'middle',fill:'white','font-size':9,'font-weight':700});
+      const v=result[mo][tp].d;if(!v)return;
+      const bh=(v/maxVal)*CH;
+      cumY-=bh;
+      s('rect',{x,y:cumY,width:bW,height:bh,fill:COLORS[j],rx:j===0?3:0},el);
+      if(bh>14)t(el,cx,cumY+bh/2+4,fmtK(v),{'text-anchor':'middle',fill:'white','font-size':9,'font-weight':700});
     });
-    const label=mo.replace(' 2026','').replace('Jun','Jun*');
+    const topY=P.t+CH-(total/maxVal)*CH;
+    t(el,cx,topY-5,fmtK(total),{'text-anchor':'middle',fill:NAVY,'font-size':10,'font-weight':700});
+    const label=mo.replace(' 2026','')+(mo==='Jun 2026'?'*':'');
     t(el,cx,P.t+CH+14,label,{'text-anchor':'middle',fill:BODY,'font-size':11});
   });
 }
@@ -523,7 +527,8 @@ function renderTypeTable(containerId,rows){
       +'<td style="'+tdS+';color:#FF5000;'+b+'">$'+Math.round(ytdd.d).toLocaleString()+'</td>'
       +'</tr>';
   };
-  el.innerHTML='<table style="width:100%;border-collapse:collapse;margin-top:4px">'
+  el.innerHTML='<table style="width:100%;border-collapse:collapse;margin-top:4px;table-layout:fixed">'
+    +'<colgroup><col style="width:22%"><col style="width:9%"><col style="width:13%"><col style="width:9%"><col style="width:13%"><col style="width:9%"><col style="width:13%"></colgroup>'
     +'<thead><tr>'
     +'<th style="'+thStyle+';text-align:left">Type</th>'
     +'<th style="'+thStyle+'">Q1 Opps</th><th style="'+thStyle+'">Q1 Growth $</th>'
