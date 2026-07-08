@@ -20,9 +20,9 @@ def load_xlsx(path):
         subprocess.check_call([sys.executable, "-m", "pip", "install", "openpyxl", "--quiet"])
         import openpyxl
     wb = openpyxl.load_workbook(path)
-    if 'SaaS Growth detail' not in wb.sheetnames:
-        raise ValueError(f"Sheet 'SaaS Growth detail' not found. Sheets: {wb.sheetnames}")
-    ws = wb['SaaS Growth detail']
+    if 'Raw Data' not in wb.sheetnames:
+        raise ValueError(f"Sheet 'Raw Data' not found. Sheets: {wb.sheetnames}")
+    ws = wb['Raw Data']
     headers = [cell.value for cell in ws[1]]
     rows = []
     for row in ws.iter_rows(min_row=2, values_only=True):
