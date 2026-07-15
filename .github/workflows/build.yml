@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'data.xlsx'
+        workflow_dispatch:
 
 jobs:
   build:
