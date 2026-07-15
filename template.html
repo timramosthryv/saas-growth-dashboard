@@ -265,14 +265,14 @@ function setPCSMQtr(q){selectedPCSMQtr=q;renderPCSM();}
 function setCoachQtr(q){selectedCoachQtr=q;renderCoach();}
 function setKickersQtr(q){selectedKickersQtr=q;renderKickers();}
 function calcKicker(q){return Math.max(0,q-3);}
-// Kicker payout rules (confirmed): TL / SEO (not Keyword Add On) / Leads Lift / New MC = tiered.
+    // Kicker payout rules (confirmed): TL / SEO (not Keyword Add On) / Leads Lift / New MC / SaaS Add-On = tiered.
 // New Thryv Social Ads & Thryv Social Ads Increase = $25 flat. All others = $0.
 // Tiers: $100-$249=$10, $250-$999=$25, $1,000-$1,999=$100, $2,000+=$150.
 // Payout applies starting at the 4th growth per quarter (any type counts toward threshold).
 function getKickerRate(gt,amt){
   gt=(gt||'').trim();
   if(gt==='New Thryv Social Ads'||gt==='Thryv Social Ads Increase')return 25;
-  const isTiered=(gt.includes('TL')||gt.includes('Leads Lift')||gt.startsWith('New MC')||(gt.includes('SEO')&&gt!=='SEO Keyword Add On'));
+    const isTiered=(gt.includes('TL')||gt.includes('Leads Lift')||gt.startsWith('New MC')||gt.includes('SaaS Add')||(gt.includes('SEO')&&gt!=='SEO Keyword Add On'));
   if(!isTiered)return 0;
   if(amt>=2000)return 150;if(amt>=1000)return 100;if(amt>=250)return 25;if(amt>=100)return 10;
   return 0;
