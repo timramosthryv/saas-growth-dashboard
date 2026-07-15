@@ -41,7 +41,7 @@ def load_xlsx(path):
             if section_val not in KEEP_SECTIONS:
                 continue
         obj = {h: serialize(row[i]) for i,h in enumerate(headers) if h and row[i] is not None}
-        if obj: rows.append(obj)
+        if obj: _dt=str(obj.get('Date SaaS Growth Occured') or '')[:10]; obj['SaaS Growth']=obj.get('New SaaS Dollars',0) or 0; obj['PCSM']=obj.get('PCSM Submitter'); obj['Coach']=obj.get('Assignee'); obj['Account name']=obj.get('Thryv ID'); obj['Month Impacted']=(datetime.strptime(_dt,'%Y-%m-%d').strftime('%b %Y') if _dt else ''); obj['Quarter']=('Q%d %d'%((datetime.strptime(_dt,'%Y-%m-%d').month-1)//3+1, datetime.strptime(_dt,'%Y-%m-%d').year) if _dt else ''); rows.append(obj)
     return rows
 
 def build(xlsx_path):
