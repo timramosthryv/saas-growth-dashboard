@@ -20,9 +20,9 @@ def load_xlsx(path):
         subprocess.check_call([sys.executable, "-m", "pip", "install", "openpyxl", "--quiet"])
         import openpyxl
     wb = openpyxl.load_workbook(path)
-    if 'Raw Data' not in wb.sheetnames:
-        raise ValueError(f"Sheet 'Raw Data' not found. Sheets: {wb.sheetnames}")
-    ws = wb['Raw Data']
+    if 'Raw Data' in wb.sheetnames:
+        ws = wb['Raw Data']
+    else: ws = wb[wb.sheetnames[0]]
     headers = [cell.value for cell in ws[1]]
 
     # Find the Section column (Column C)
