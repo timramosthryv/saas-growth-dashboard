@@ -1,0 +1,41 @@
+name: Nightly Dashboard Refresh
+
+on:
+  schedule:
+    # 05:00 UTC is roughly midnight US Central. GitHub cron does not adjust for
+    # daylight saving, so this runs at 12:00 AM CDT (summer) / 11:00 PM CST (winter).
+    - cron: '0 5 * * *'
+  workflow_dispatch: {}   # lets you run it on demand from the Actions tab
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install openpyxl tzdata
+
+      - name: Fetch latest data from Asana
+        env:
+          ASANA_TOKEN: ${{ secrets.ASANA_TOKEN }}
+        run: python fetch_asana.py
+
+      - name: Build dashboard
+        run: python build.py data.xlsx
+
+      - name: Commit refreshed data and dashboard
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data.xlsx index.html
+          git diff --staged --quiet || git commit -m "Nightly SaaS Growth refresh [skip ci]"
+          git push
