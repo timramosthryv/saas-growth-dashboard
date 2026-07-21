@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      issues: write
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -39,3 +40,19 @@ jobs:
           git add data.xlsx index.html
           git diff --staged --quiet || git commit -m "Nightly SaaS Growth refresh [skip ci]"
           git push
+
+      - name: Alert on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue create \
+            --title "Nightly dashboard refresh FAILED ($(date -u +%Y-%m-%d))" \
+            --body "The Nightly Dashboard Refresh workflow did not complete. The dashboard may be showing stale data.
+
+          Failed run: $RUN_URL
+
+          Most likely cause: the ASANA_TOKEN secret has expired or been revoked. To fix, generate a new Asana personal access token, update the repository secret (Settings > Secrets and variables > Actions > ASANA_TOKEN), then re-run the workflow from the Actions tab.
+
+          Opened automatically by the nightly workflow."
