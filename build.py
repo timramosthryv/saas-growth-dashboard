@@ -6,7 +6,7 @@ Usage: python build.py data.xlsx
 Output: index.html (self-contained; committed to GitHub Pages)
 
 Reads the SaaS Growth export, then:
-  1. keeps only the Reviewed and Reported 2026 sections,
+  1. keeps only the Approved 2026 section,
   2. drops any growth that OCCURRED before 2026-01-01 (the pre-2026 floor),
   3. derives the dashboard columns (SaaS Growth, PCSM, Coach, Month Impacted, Quarter),
   4. injects the data into template.html.
@@ -17,7 +17,7 @@ or one that already contains the derived columns.
 import sys, os, json
 from datetime import datetime, date
 
-KEEP_SECTIONS = {"Reviewed", "Reported 2026"}
+KEEP_SECTIONS = {"Approved 2026"}
 FLOOR = date(2026, 1, 1)   # drop growths that occurred before this date
 MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
