@@ -5,7 +5,7 @@ fetch_asana.py - Pull SaaS Growth tasks from Asana into data.xlsx (raw export).
 Requires environment variable ASANA_TOKEN (a personal access token).
 Output: data.xlsx with a single 'Raw Data' sheet, ready for build.py.
 
-Pulls the Reviewed and Reported 2026 sections of the SaaS Growth project,
+Pulls the Approved 2026 section of the SaaS Growth project,
 paginating through all results. Timestamps are converted to US Central time.
 """
 import os, sys, time, json, urllib.request, urllib.parse
@@ -20,8 +20,7 @@ if not TOKEN:
 
 PROJECT_GID = "1207186220930827"
 SECTIONS = {
-    "Reported 2026": "1212708838044909",
-    "Reviewed": "1207186220930831",
+    "Approved 2026": "1212708838044909",
 }
 OPT_FIELDS = ("name,assignee.name,created_at,due_on,modified_at,completed_at,completed,"
               "parent.name,memberships.project.gid,memberships.section.name,"
