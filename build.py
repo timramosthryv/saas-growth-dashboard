@@ -16,6 +16,7 @@ or one that already contains the derived columns.
 """
 import sys, os, json
 from datetime import datetime, date
+from zoneinfo import ZoneInfo
 
 KEEP_SECTIONS = {"Approved 2026"}
 FLOOR = date(2026, 1, 1)   # drop growths that occurred before this date
@@ -100,7 +101,7 @@ def build(xlsx_path):
     print(f"  {len(rows)} rows after filter + floor + transform")
     with open(template_path, 'r', encoding='utf-8') as f:
         html = f.read()
-    ts = datetime.now().strftime('%b %d, %Y')
+    ts = datetime.now(ZoneInfo("America/Chicago")).strftime('%b %d, %Y %I:%M %p %Z')
     json_data = json.dumps(rows, separators=(',', ':'), ensure_ascii=False)
     injection = f"// Embedded dataset - generated {ts}\nconst __EMBEDDED_DATA__={json_data};"
     html = html.replace('// @@DATA_INJECTION@@', injection)
