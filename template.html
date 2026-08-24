@@ -126,6 +126,7 @@ svg{display:block;width:100%}
 <div class="tab-bar">
   <div class="tab active" onclick="showTab('summary',this)">YTD Summary</div>
   <div class="tab" onclick="showTab('qtd',this)">QTD Summary</div>
+  <div class="tab" onclick="showTab('mtd',this)">MTD Summary</div>
   <div class="tab" onclick="showTab('pcsm',this)">By Employee</div>
   <div class="tab" onclick="showTab('coach',this)">By Coach</div>
   <div class="tab" onclick="showTab('kickers',this)">Kickers</div>
@@ -174,6 +175,28 @@ svg{display:block;width:100%}
   </div>
 </div>
 
+<div class="pane" id="pane-mtd">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <label style="font-size:12px;font-weight:700;color:#0F1735;letter-spacing:.5px;text-transform:uppercase">Month</label>
+    <select id="mtdMonthSel" onchange="setMTDMonth(this.value)" style="font-size:13px;font-weight:600;color:#0F1735;border:1.5px solid #E2E8F0;border-radius:6px;padding:6px 12px;background:white;cursor:pointer;outline:none;min-width:110px"></select>
+  </div>
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-val" id="m-total">--</div><div class="kpi-lbl">Total SaaS Growth <span class="qtd-label" id="m-lbl1">MTD</span></div></div>
+    <div class="kpi"><div class="kpi-val" id="m-opps">--</div><div class="kpi-lbl">Total Opportunities <span class="qtd-label" id="m-lbl2">MTD</span></div></div>
+    <div class="kpi"><div class="kpi-val" id="m-avg">--</div><div class="kpi-lbl">Avg Deal Size <span class="qtd-label" id="m-lbl3">MTD</span></div></div>
+    <div class="kpi"><div class="kpi-val" id="m-ba">--</div><div class="kpi-lbl">BA Engagement Rate <span class="qtd-label" id="m-lbl4">MTD</span></div></div>
+  </div>
+  <div class="grid">
+    <div class="panel full"><div class="panel-title">Daily Growth <span class="qtd-label" id="m-lbl5">MTD</span></div><div class="panel-sub">Each bar is one day in the selected month. Days with no growth are omitted.</div><svg id="m1" height="230"></svg></div>
+    <div class="panel"><div class="panel-title">Growth by Type <span class="qtd-label" id="m-lbl6">MTD</span></div><svg id="m2"></svg></div>
+    <div class="panel"><div class="panel-title">Coach Rankings <span class="qtd-label" id="m-lbl7">MTD</span></div><svg id="m4" height="310"></svg></div>
+    <div class="panel full"><div class="panel-title">PCSM Performance Ranking <span class="qtd-label" id="m-lbl8">MTD</span></div><svg id="m3"></svg></div>
+    <div class="panel"><div class="panel-title">BA Presence <span class="qtd-label" id="m-lbl9">MTD</span></div><svg id="m5" height="170"></svg></div>
+    <div class="panel"><div class="panel-title">Net New vs. Upgrades <span class="qtd-label" id="m-lbl10">MTD</span></div><svg id="m6" height="170"></svg></div>
+    <div class="panel full"><div class="panel-title">Growth Type Mix by Coach <span class="qtd-label" id="m-lbl11">MTD</span></div><svg id="m7" height="250"></svg><div class="legend"><div class="leg"><div class="leg-dot" style="background:#FF5000"></div>TL Increase</div><div class="leg"><div class="leg-dot" style="background:#E07B39"></div>New TL</div><div class="leg"><div class="leg-dot" style="background:#0F6B9E"></div>New Social Ads</div><div class="leg"><div class="leg-dot" style="background:#2D9D6A"></div>New SEO</div><div class="leg"><div class="leg-dot" style="background:#8B5CF6"></div>SEO Increase</div><div class="leg"><div class="leg-dot" style="background:#D4A017"></div>Leads Lift</div><div class="leg"><div class="leg-dot" style="background:#CBD5E0"></div>Other</div></div></div>
+  </div>
+</div>
+
 <div class="pane" id="pane-pcsm">
   <div class="selector-row">
     <label>Employee</label>
@@ -211,6 +234,7 @@ svg{display:block;width:100%}
     <select id="rdCoach" onchange="setRDFilter('coach',this.value)" style="font-size:12px;border:1.5px solid #DFE4ED;border-radius:7px;padding:7px 12px;background:white;cursor:pointer;color:#0F1735;min-width:150px"><option value="">All Coaches</option></select>
     <select id="rdPCSM" onchange="setRDFilter('pcsm',this.value)" style="font-size:12px;border:1.5px solid #DFE4ED;border-radius:7px;padding:7px 12px;background:white;cursor:pointer;color:#0F1735;min-width:160px"><option value="">All Employees</option></select>
     <select id="rdQtr" onchange="setRDFilter('quarter',this.value)" style="font-size:12px;border:1.5px solid #DFE4ED;border-radius:7px;padding:7px 12px;background:white;cursor:pointer;color:#0F1735;min-width:110px"><option value="">All Quarters</option></select>
+    <select id="rdMonth" onchange="setRDFilter('month',this.value)" style="font-size:12px;border:1.5px solid #DFE4ED;border-radius:7px;padding:7px 12px;background:white;cursor:pointer;color:#0F1735;min-width:110px"><option value="">All Months</option></select>
     <input id="rdSearch" type="text" placeholder="Search account or employee..." oninput="setRDFilter('search',this.value)" style="font-size:12px;border:1.5px solid #DFE4ED;border-radius:7px;padding:7px 12px;color:#0F1735;min-width:220px;outline:none">
     <span id="rdCount" style="font-size:12px;color:#718096;margin-left:auto;white-space:nowrap"></span>
     <button onclick="clearRDFilters()" style="font-size:11px;font-weight:700;color:#718096;background:white;border:1.5px solid #DFE4ED;border-radius:7px;padding:7px 14px;cursor:pointer;text-transform:uppercase;letter-spacing:.3px">Clear</button>
@@ -246,6 +270,23 @@ function populateQTDDropdown(){
   quarters.forEach(q=>{const o=new Option(q,q);if(q===selectedQTD)o.selected=true;sel.add(o);});
   if(!quarters.includes(selectedQTD)&&quarters.length){selectedQTD=quarters[quarters.length-1];sel.value=selectedQTD;}
 }
+// --- MTD (month-to-date) state and helpers ---
+const MONTH_ABBR=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function getCM(){const d=new Date();return MONTH_ABBR[d.getMonth()]+' '+d.getFullYear();}
+const CM=getCM();
+let selectedMTD=CM;
+function monthKey(m){const p=String(m||'').trim().split(/\s+/);const i=MONTH_ABBR.indexOf(p[0]);const y=parseInt(p[1],10);return(i<0||isNaN(y))?-1:y*12+i;}
+function getAvailableMonths(){return[...new Set(DATA.map(r=>(r['Month Impacted']||'').trim()).filter(Boolean))].sort((a,b)=>monthKey(a)-monthKey(b));}
+function setMTDMonth(m){selectedMTD=m;renderMTD();}
+function populateMTDDropdown(){
+  const sel=document.getElementById('mtdMonthSel');
+  if(!sel)return;
+  const months=getAvailableMonths();
+  sel.innerHTML='';
+  months.forEach(m=>{const o=new Option(m,m);if(m===selectedMTD)o.selected=true;sel.add(o);});
+  if(!months.includes(selectedMTD)&&months.length){selectedMTD=months[months.length-1];sel.value=selectedMTD;}
+}
+
 let pcsmPeriod='ytd',coachPeriod='ytd',DATA=[],DATA_SOURCE='loading',DATA_TS=null;
 let selectedPCSMQtr=null,selectedCoachQtr=null,selectedKickersQtr=null;
 
@@ -298,6 +339,17 @@ function fmtD(n){return'$'+Math.round(n).toLocaleString();}
 function aggMonthly(rows){
   const m={};rows.forEach(r=>{const mo=r['Month Impacted']||'';if(!mo)return;if(!m[mo])m[mo]={d:0,o:0};m[mo].d+=Number(r['SaaS Growth'])||0;m[mo].o++;});
   return MONTH_ORDER.filter(mo=>m[mo]).map(mo=>({m:mo.replace(' 2026',''),d:m[mo].d,o:m[mo].o,partial:false}));
+}
+function aggDaily(rows){
+  const m={};
+  rows.forEach(r=>{
+    const mm=String(r['Date SaaS Growth Occured']||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(!mm)return;
+    const key=mm[1]+'-'+mm[2]+'-'+mm[3];
+    if(!m[key])m[key]={d:0,o:0,lbl:String(parseInt(mm[3],10))};
+    m[key].d+=Number(r['SaaS Growth'])||0;m[key].o++;
+  });
+  return Object.keys(m).sort().map(k=>({m:m[k].lbl,d:m[k].d,o:m[k].o,partial:false}));
 }
 function aggType(rows){
   const t={};rows.forEach(r=>{const tp=r['SaaS Growth Type']||'Other';if(!t[tp])t[tp]={d:0,o:0};t[tp].d+=Number(r['SaaS Growth'])||0;t[tp].o++;});
@@ -354,7 +406,7 @@ function aggMix(rows){
 function uniq(key){return[...new Set(DATA.map(r=>r[key]).filter(Boolean))].sort();}
 
 // Chart renderers
-function drawMonthly(id,data){
+function drawMonthly(id,data,flatColor){
   const el=svgEl(id);if(!el)return;el.replaceChildren();
   const W=svgW(id),H=+el.getAttribute('height')||230;el.setAttribute('viewBox',`0 0 ${W} ${H}`);
   if(!data?.length){t(el,W/2,H/2,'No data',{'text-anchor':'middle',fill:MUTED,'font-size':13});return;}
@@ -367,7 +419,7 @@ function drawMonthly(id,data){
   t(el,P.l+CW+5,lineTop-2,'Opps',{fill:MUTED,'font-size':10,'font-weight':600});
   data.forEach((d,i)=>{
     const x=P.l+i*step+(step-bw)/2,bh=(d.d/maxD)*barZoneH,y=barBase-bh;
-    const clr=d.partial?'#CBD5E0':d.d>=120000?GREEN:d.d>=80000?YELLOW:RED;
+    const clr=d.partial?'#CBD5E0':(flatColor||(d.d>=120000?GREEN:d.d>=80000?YELLOW:RED));
     s('rect',{x,y,width:bw,height:bh,fill:clr,rx:3},el);
     const lY=bh>22?y+13:y-5;
     t(el,x+bw/2,lY,fmtK(d.d),{'text-anchor':'middle',fill:bh>22?'white':BODY,'font-size':10,'font-weight':700});
@@ -605,6 +657,22 @@ function renderQTD(){
   drawBA('q5',aggBA(qRows));drawNN('q6',aggNN(qRows));drawMix('q7',aggMix(qRows));
 }
 
+function renderMTD(){
+  if(!DATA.length)return;
+  populateMTDDropdown();
+  const mRows=DATA.filter(r=>(r['Month Impacted']||'').trim()===selectedMTD);
+  const total=mRows.reduce((s,r)=>s+(Number(r['SaaS Growth'])||0),0),opps=mRows.length,avg=opps?Math.round(total/opps):0;
+  const baR=mRows.filter(r=>{const b=(r['Was the BA on Recommendation Call']||'').toLowerCase();return b==='yes'||b.includes('recommendation');});
+  document.getElementById('m-total').textContent='$'+Math.round(total).toLocaleString();
+  document.getElementById('m-opps').textContent=opps.toLocaleString();
+  document.getElementById('m-avg').textContent='$'+avg.toLocaleString();
+  document.getElementById('m-ba').textContent=opps?((baR.length/opps)*100).toFixed(1)+'%':'--';
+  ['m-lbl1','m-lbl2','m-lbl3','m-lbl4','m-lbl5','m-lbl6','m-lbl7','m-lbl8','m-lbl9','m-lbl10','m-lbl11'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=selectedMTD;});
+  drawMonthly('m1',aggDaily(mRows),ORANGE);drawHBar('m2',aggType(mRows),'type','d',ORANGE,true,0);
+  drawHBar('m4',aggCoach(mRows),'name','total',NAVY,false);drawPCSMRanked('m3',aggPCSM(mRows),avg);
+  drawBA('m5',aggBA(mRows));drawNN('m6',aggNN(mRows));drawMix('m7',aggMix(mRows));
+}
+
 function populatePCSMDropdown(){const sel=document.getElementById('pcsmSel');const cur=sel.value;while(sel.options.length>1)sel.remove(1);uniq('PCSM').forEach(n=>sel.add(new Option(n,n)));if(cur)sel.value=cur;}
 function populateCoachDropdown(){const sel=document.getElementById('coachSel');const cur=sel.value;while(sel.options.length>1)sel.remove(1);uniq('Coach').forEach(n=>sel.add(new Option(n,n)));if(cur)sel.value=cur;}
 
@@ -761,7 +829,7 @@ const RD_COLS=[
   {key:'New SaaS Dollars',label:'New SaaS $',num:true},
   {key:'Was the BA on Recommendation Call',label:'BA on Call'},
 ];
-let rdFilters={coach:'',pcsm:'',quarter:'',search:''};
+let rdFilters={coach:'',pcsm:'',quarter:'',month:'',search:''};
 let rdSort={col:'Date SaaS Growth Occured',dir:1};
 
 function getRDRows(){
@@ -769,6 +837,7 @@ function getRDRows(){
   if(rdFilters.coach)rows=rows.filter(r=>r['Coach']===rdFilters.coach);
   if(rdFilters.pcsm)rows=rows.filter(r=>r['PCSM']===rdFilters.pcsm);
   if(rdFilters.quarter)rows=rows.filter(r=>r['Quarter']===rdFilters.quarter);
+  if(rdFilters.month)rows=rows.filter(r=>(r['Month Impacted']||'').trim()===rdFilters.month);
   if(rdFilters.search){const s=rdFilters.search.toLowerCase();rows=rows.filter(r=>(r['Account name']||'').toLowerCase().includes(s)||(r['PCSM']||'').toLowerCase().includes(s));}
   if(rdSort.col){rows.sort((a,b)=>{const va=a[rdSort.col]??'',vb=b[rdSort.col]??'';if(typeof va==='number'&&typeof vb==='number')return(va-vb)*rdSort.dir;return String(va).localeCompare(String(vb))*rdSort.dir;});}
   return rows;
@@ -776,10 +845,17 @@ function getRDRows(){
 function sortRD(col){if(rdSort.col===col)rdSort.dir*=-1;else{rdSort.col=col;rdSort.dir=1;}renderRawData();}
 function setRDFilter(key,val){rdFilters[key]=val;renderRawData();}
 function clearRDFilters(){
-  rdFilters={coach:'',pcsm:'',quarter:'',search:''};
-  ['rdCoach','rdPCSM','rdQtr'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  rdFilters={coach:'',pcsm:'',quarter:'',month:'',search:''};
+  ['rdCoach','rdPCSM','rdQtr','rdMonth'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const s=document.getElementById('rdSearch');if(s)s.value='';
   renderRawData();
+}
+function rdExportName(){
+  const slug=v=>String(v).trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const parts=['saas-growth-data'];
+  if(rdFilters.quarter)parts.push(slug(rdFilters.quarter));
+  if(rdFilters.month)parts.push(slug(rdFilters.month));
+  return parts.join('-')+'.csv';
 }
 function exportRDCSV(){
   const rows=getRDRows();
@@ -790,7 +866,7 @@ function exportRDCSV(){
     return'"'+String(v).replace(/"/g,'""')+'"';
   }).join(',')).join('\n');
   const blob=new Blob([header+'\n'+body],{type:'text/csv'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='saas-growth-data.csv';a.click();URL.revokeObjectURL(a.href);
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=rdExportName();a.click();URL.revokeObjectURL(a.href);
 }
 function renderRawData(){
   if(!DATA.length)return;
@@ -799,6 +875,8 @@ function renderRawData(){
   if(rdCoach&&rdCoach.options.length===1){uniq('Coach').forEach(v=>rdCoach.add(new Option(v,v)));}
   if(rdPCSM&&rdPCSM.options.length===1){uniq('PCSM').forEach(v=>rdPCSM.add(new Option(v,v)));}
   if(rdQtr&&rdQtr.options.length===1){getAvailableQuarters().forEach(v=>rdQtr.add(new Option(v,v)));}
+  const rdMonth=document.getElementById('rdMonth');
+  if(rdMonth&&rdMonth.options.length===1){getAvailableMonths().forEach(v=>rdMonth.add(new Option(v,v)));}
   const cnt=document.getElementById('rdCount');
   if(cnt)cnt.textContent='Showing '+rows.length.toLocaleString()+' of '+DATA.length.toLocaleString()+' rows';
   const thS='font-size:11px;font-weight:700;color:#0F1735;text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;background:#F5F7FA;border-bottom:2px solid #DFE4ED;white-space:nowrap;cursor:pointer;user-select:none;position:sticky;top:0';
@@ -845,6 +923,7 @@ function showTab(name,el){
   if(el)el.classList.add('active');
   document.getElementById('pane-'+name).classList.add('active');
   if(name==='qtd')requestAnimationFrame(()=>requestAnimationFrame(()=>renderQTD()));
+  if(name==='mtd')requestAnimationFrame(()=>requestAnimationFrame(()=>renderMTD()));
   if(name==='pcsm'){populatePCSMDropdown();populateTabQtrDropdown('pcsmQtrSel',selectedPCSMQtr,q=>{selectedPCSMQtr=q;});renderPCSM();}
   if(name==='coach'){populateCoachDropdown();populateTabQtrDropdown('coachQtrSel',selectedCoachQtr,q=>{selectedCoachQtr=q;});renderCoach();}
   if(name==='kickers'){populateTabQtrDropdown('kickersQtrSel',selectedKickersQtr,q=>{selectedKickersQtr=q;});renderKickers();}
@@ -953,7 +1032,7 @@ async function handleFiles(files){
 
 window.addEventListener('DOMContentLoaded',()=>{
   autoLoad();
-  let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{const id=document.querySelector('.pane.active')?.id;if(id==='pane-summary')renderSummary();else if(id==='pane-qtd')renderQTD();else if(id==='pane-pcsm')renderPCSM();else if(id==='pane-coach')renderCoach();},200);});
+  let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{const id=document.querySelector('.pane.active')?.id;if(id==='pane-summary')renderSummary();else if(id==='pane-qtd')renderQTD();else if(id==='pane-mtd')renderMTD();else if(id==='pane-pcsm')renderPCSM();else if(id==='pane-coach')renderCoach();},200);});
 });
 </script>
 </body>
