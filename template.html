@@ -431,7 +431,7 @@ function drawMonthly(id,data,flatColor){
   /* partial-month footnote removed */
 }
 
-function drawHBar(id,data,lk,vk,color,showAvg,cap=8){
+function drawHBar(id,data,lk,vk,color,showAvg,cap=8,ck=null){
   const el=svgEl(id);if(!el)return;el.replaceChildren();
   const W=svgW(id);
   if(!data?.length){el.setAttribute('height',60);el.setAttribute('viewBox',`0 0 ${W} 60`);t(el,W/2,30,'No data',{'text-anchor':'middle',fill:MUTED,'font-size':13});return;}
@@ -439,13 +439,15 @@ function drawHBar(id,data,lk,vk,color,showAvg,cap=8){
   const lW=cap===0?Math.min(185,W*0.35):Math.min(145,W*0.3),P={t:20,r:showAvg?72:12,b:8,l:lW+10};
   const H=cap===0?(P.t+n*36+P.b):(+el.getAttribute('height')||310);
   el.setAttribute('height',H);el.setAttribute('viewBox',`0 0 ${W} ${H}`);
-  const CW=W-P.l-P.r,CH=H-P.t-P.b,maxV=data[0][vk]*1.1||100,step=CH/n,bh=step*0.55;
+  const CW=W-P.l-P.r,CH=H-P.t-P.b,maxV=data[0][vk]*(ck?1.3:1.1)||100,step=CH/n,bh=step*0.55;
   if(showAvg)t(el,W-4,14,'Avg/Opp',{'text-anchor':'end',fill:MUTED,'font-size':10,'font-weight':600});
   data.slice(0,n).forEach((d,i)=>{
     const y=P.t+i*step+(step-bh)/2,bw=(d[vk]/maxV)*CW,op=Math.max(0.45,1-i*0.06);
     t(el,P.l-7,y+bh/2+4,d[lk],{'text-anchor':'end',fill:NAVY,'font-size':11});
     s('rect',{x:P.l,y,width:bw,height:bh,fill:color||ORANGE,rx:3,opacity:op},el);
-    t(el,P.l+bw+5,y+bh/2+4,fmtK(d[vk]),{fill:NAVY,'font-size':11,'font-weight':600});
+    const vLbl=t(el,P.l+bw+5,y+bh/2+4,'',{fill:NAVY,'font-size':11,'font-weight':600});
+    vLbl.appendChild(s('tspan',{},null)).textContent=fmtK(d[vk]);
+    if(ck&&d[ck]!=null){const cs=s('tspan',{fill:MUTED,'font-weight':400},vLbl);cs.textContent=' ('+d[ck]+')';}
     if(showAvg&&d.avg)t(el,W-4,y+bh/2+4,'$'+d.avg.toLocaleString(),{'text-anchor':'end',fill:MUTED,'font-size':10});
   });
 }
@@ -632,7 +634,7 @@ function renderSummary(){
   document.getElementById('s-ba').textContent=((baR.length/opps)*100).toFixed(1)+'%';
   document.getElementById('hdrDesc').textContent=`The team generated $${Math.round(total).toLocaleString()} across ${opps.toLocaleString()} opportunities year-to-date. Use the tabs below to explore performance by employee or coach.`;
   const ba=aggBA(DATA),nn=aggNN(DATA);
-  drawMonthly('c1',aggMonthly(DATA));drawHBar('c2',aggType(DATA),'type','d',ORANGE,true,0);
+  drawMonthly('c1',aggMonthly(DATA));drawHBar('c2',aggType(DATA),'type','d',ORANGE,true,0,'o');
   drawCoachSlope('c4',aggCoachSlope(DATA));drawPCSMRanked('c3',aggPCSM(DATA),avg);
   {const _t=document.getElementById('c4-title'),_a=document.getElementById('c4-leg1'),_b=document.getElementById('c4-leg2');if(_t)_t.textContent='Coach Performance \u2014 '+SLOPE_QUARTERS[0]+' vs. '+SLOPE_QUARTERS[1];if(_a)_a.textContent=SLOPE_QUARTERS[0];if(_b)_b.textContent=SLOPE_QUARTERS[1];}
   drawBA('c5',ba);drawNN('c6',nn);drawMix('c7',aggMix(DATA));
@@ -652,7 +654,7 @@ function renderQTD(){
   document.getElementById('q-avg').textContent='$'+avg.toLocaleString();
   document.getElementById('q-ba').textContent=opps?((baR.length/opps)*100).toFixed(1)+'%':'--';
   ['q-lbl1','q-lbl2','q-lbl3','q-lbl4','q-lbl5','q-lbl6','q-lbl7','q-lbl8','q-lbl9','q-lbl10','q-lbl11'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=selectedQTD;});
-  drawMonthly('q1',aggMonthly(qRows));drawHBar('q2',aggType(qRows),'type','d',ORANGE,true,0);
+  drawMonthly('q1',aggMonthly(qRows));drawHBar('q2',aggType(qRows),'type','d',ORANGE,true,0,'o');
   drawHBar('q4',aggCoach(qRows),'name','total',NAVY,false);drawPCSMRanked('q3',aggPCSM(qRows),avg);
   drawBA('q5',aggBA(qRows));drawNN('q6',aggNN(qRows));drawMix('q7',aggMix(qRows));
 }
@@ -668,7 +670,7 @@ function renderMTD(){
   document.getElementById('m-avg').textContent='$'+avg.toLocaleString();
   document.getElementById('m-ba').textContent=opps?((baR.length/opps)*100).toFixed(1)+'%':'--';
   ['m-lbl1','m-lbl2','m-lbl3','m-lbl4','m-lbl5','m-lbl6','m-lbl7','m-lbl8','m-lbl9','m-lbl10','m-lbl11'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=selectedMTD;});
-  drawMonthly('m1',aggDaily(mRows),ORANGE);drawHBar('m2',aggType(mRows),'type','d',ORANGE,true,0);
+  drawMonthly('m1',aggDaily(mRows),ORANGE);drawHBar('m2',aggType(mRows),'type','d',ORANGE,true,0,'o');
   drawHBar('m4',aggCoach(mRows),'name','total',NAVY,false);drawPCSMRanked('m3',aggPCSM(mRows),avg);
   drawBA('m5',aggBA(mRows));drawNN('m6',aggNN(mRows));drawMix('m7',aggMix(mRows));
 }
@@ -745,7 +747,7 @@ function renderPCSM(){
   const logFoot=logTotalPayout>0?`<tfoot><tr style="background:#F5F7FA"><td colspan="${logCols}" style="text-align:right;font-size:12px;font-weight:700;color:#718096;padding:10px 14px">Total Kicker Payout</td><td style="text-align:right;font-weight:700;color:#2D9D6A;padding:10px 14px">$${logTotalPayout.toLocaleString()}</td></tr></tfoot>`:'';
   const logSection=`<div class="grid" style="grid-template-columns:1fr"><div class="panel full"><div class="panel-title">Growth Detail — ${isQTD?qtr:'YTD'}</div><div class="panel-sub">Every growth in order by date. The 3 lowest-dollar amounts each quarter are the threshold (no payout). All others earn a kicker for qualifying types.</div><table class="log-table"><thead><tr><th style="text-align:center">#</th><th>Date</th>${!isQTD?'<th>Quarter</th>':''}<th>Account</th><th>Growth Type</th><th style="text-align:right">Amount</th><th style="text-align:center">Threshold Status</th><th style="text-align:right">Kicker Payout</th></tr></thead><tbody>${logTbody}</tbody>${logFoot}</table></div></div>`;
   cont.innerHTML=`<div class="${grid}"><div class="kpi"><div class="kpi-val">$${Math.round(total).toLocaleString()}</div><div class="kpi-lbl">Total Growth${isQTD?` <span class="qtd-label">${qtr}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">${opps}</div><div class="kpi-lbl">Opportunities${isQTD?` <span class="qtd-label">${qtr}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">$${avg.toLocaleString()}</div><div class="kpi-lbl">Avg Deal Size</div></div><div class="kpi"><div class="kpi-val">${baRate}</div><div class="kpi-lbl">BA Rate</div></div>${kTile}</div><div class="grid"><div class="panel full"><div style="font-size:12px;color:#718096">Coach: <strong style="color:#0F1735">${coach}</strong>&nbsp;&nbsp;\xb7&nbsp;&nbsp;Top Type: <strong style="color:#FF5000">${ta[0]?.type||'--'}</strong></div></div><div class="panel full"><div class="panel-title">${isQTD?qtr+' ':''}Monthly Growth — ${pcsm}</div><svg id="pc1" height="210"></svg></div><div class="panel"><div class="panel-title">Growth by Type</div><svg id="pc2" height="280"></svg></div><div class="panel"><div class="panel-title">Net New vs. Upgrades</div><svg id="pc6" height="280"></svg></div></div>${logSection}`;
-  requestAnimationFrame(()=>{drawMonthly('pc1',aggMonthly(rows));drawHBar('pc2',ta,'type','d',ORANGE,true);drawNN('pc6',aggNN(rows));});
+  requestAnimationFrame(()=>{drawMonthly('pc1',aggMonthly(rows));drawHBar('pc2',ta,'type','d',ORANGE,true,8,'o');drawNN('pc6',aggNN(rows));});
 }
 
 function renderCoach(){
@@ -755,7 +757,7 @@ function renderCoach(){
   const total=rows.reduce((s,r)=>s+(Number(r['SaaS Growth'])||0),0),opps=rows.length,avg=opps?Math.round(total/opps):0;
   const pcsms=aggPCSM(rows),pcsmCount=[...new Set(allR.map(r=>r['PCSM']))].length;
   cont.innerHTML=`<div class="kpi-row"><div class="kpi"><div class="kpi-val">$${Math.round(total).toLocaleString()}</div><div class="kpi-lbl">Total Growth${isQTD?` <span class="qtd-label">${cqtr}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">${opps}</div><div class="kpi-lbl">Opportunities${isQTD?` <span class="qtd-label">${cqtr}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">$${avg.toLocaleString()}</div><div class="kpi-lbl">Avg Deal Size</div></div><div class="kpi"><div class="kpi-val">${pcsmCount}</div><div class="kpi-lbl">Active PCSMs</div></div></div><div class="grid"><div class="panel full"><div class="panel-title">${isQTD?cqtr+' ':''}Monthly Growth — ${coach} Team</div><svg id="cc1" height="210"></svg></div><div class="panel"><div class="panel-title">PCSM Rankings${isQTD?` <span class="qtd-label">${cqtr}</span>`:''}</div><svg id="cc2" height="310"></svg></div><div class="panel"><div class="panel-title">Growth by Type</div><svg id="cc3" height="310"></svg></div></div>`;
-  requestAnimationFrame(()=>{drawMonthly('cc1',aggMonthly(rows));drawHBar('cc2',pcsms,'name','total',NAVY,false,0);drawHBar('cc3',aggType(rows),'type','d',ORANGE,true);});
+  requestAnimationFrame(()=>{drawMonthly('cc1',aggMonthly(rows));drawHBar('cc2',pcsms,'name','total',NAVY,false,0);drawHBar('cc3',aggType(rows),'type','d',ORANGE,true,8,'o');});
 }
 
 function renderKickers(){
