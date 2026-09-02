@@ -305,6 +305,23 @@ function populateTabQtrDropdown(selId,stateVar,setter){
 function setPCSMQtr(q){selectedPCSMQtr=q;renderPCSM();}
 function setCoachQtr(q){selectedCoachQtr=q;renderCoach();}
 function setKickersQtr(q){selectedKickersQtr=q;renderKickers();}
+// ── Coach attribution ─────────────────────────────────────────────────────────
+// Credit the coach the employee actually reported to during the period on screen,
+// taken from their most recent growth inside that period. Blank Assignee values in
+// the source are skipped rather than treated as "no coach". If the employee has no
+// coached rows in the period, fall back to the most recent coach on record so a
+// reassignment or an inactive quarter still shows who they roll up to.
+function rowTime(r){const t=new Date(r['Date SaaS Growth Occured']).getTime();return isNaN(t)?-Infinity:t;}
+function latestCoach(rows){
+  let best='',bt=-Infinity;
+  rows.forEach(r=>{const c=(r['Coach']||'').trim();if(!c)return;const t=rowTime(r);if(t>=bt){bt=t;best=c;}});
+  return best;
+}
+function coachFor(pcsm,quarter){
+  const all=DATA.filter(r=>(r['PCSM']||'').trim()===pcsm);
+  if(quarter){const c=latestCoach(all.filter(r=>r['Quarter']===quarter));if(c)return c;}
+  return latestCoach(all);
+}
 function calcKicker(q){return Math.max(0,q-3);}
     // Kicker payout rules (confirmed): TL / SEO (not Keyword Add On) / Leads Lift / New MC / SaaS Add-On = tiered.
 // New Thryv Social Ads & Thryv Social Ads Increase = $25 flat. All others = $0.
@@ -727,7 +744,7 @@ function renderPCSM(){
   if(!pcsm){cont.innerHTML='<div class="empty-state"><h3>Select an employee above</h3></div>';return;}
   const qtr=selectedPCSMQtr||CQ;const allR=DATA.filter(r=>r['PCSM']===pcsm),rows=isQTD?allR.filter(r=>r['Quarter']===qtr):allR;
   const total=rows.reduce((s,r)=>s+(Number(r['SaaS Growth'])||0),0),opps=rows.length,avg=opps?Math.round(total/opps):0;
-  const ta=aggType(rows),coach=allR[0]?.['Coach']||'--';
+  const ta=aggType(rows),coach=coachFor(pcsm,isQTD?qtr:null)||'--';
   const br=rows.filter(r=>{const b=(r['Was the BA on Recommendation Call']||'').toLowerCase();return b==='yes'||b.includes('recommendation');});
   const baRate=opps?((br.length/opps)*100).toFixed(0)+'%':'--';
   const kickers=isQTD?calcKicker(opps):null;
@@ -764,11 +781,11 @@ function renderKickers(){
   const cont=document.getElementById('kickers-content');
   if(!DATA.length){cont.innerHTML='<div class="empty-state"><h3>No data loaded</h3></div>';return;}
   const allP={};
-  DATA.forEach(r=>{const p=(r['PCSM']||'').trim(),c=(r['Coach']||'').trim();if(p&&!allP[p])allP[p]={coach:c,opps:0};});
+  DATA.forEach(r=>{const p=(r['PCSM']||'').trim();if(p&&!allP[p])allP[p]={opps:0};});
   const kqtr=selectedKickersQtr||CQ;DATA.filter(r=>r['Quarter']===kqtr).forEach(r=>{const p=(r['PCSM']||'').trim();if(allP[p])allP[p].opps++;});
   const kData=Object.entries(allP).map(([name,v])=>{
     const payout=calcQtdPayout(name,kqtr);
-    return{name,coach:v.coach,opps:v.opps,kickers:calcKicker(v.opps),payout,noQ2:v.opps===0};
+    return{name,coach:coachFor(name,kqtr),opps:v.opps,kickers:calcKicker(v.opps),payout,noQ2:v.opps===0};
   }).sort((a,b)=>b.kickers-a.kickers||b.opps-a.opps);
   const totalK=kData.reduce((s,d)=>s+d.kickers,0);
   const qualified=kData.filter(d=>d.kickers>0).length;
