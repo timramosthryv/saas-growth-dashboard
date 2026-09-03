@@ -323,17 +323,48 @@ function coachFor(pcsm,quarter){
   return latestCoach(all);
 }
 function calcKicker(q){return Math.max(0,q-3);}
-    // Kicker payout rules (confirmed): TL / SEO (not Keyword Add On) / Leads Lift / New MC / SaaS Add-On = tiered.
-// New Thryv Social Ads & Thryv Social Ads Increase = $25 flat. All others = $0.
-// Tiers: $100-$249=$10, $250-$999=$25, $1,000-$1,999=$100, $2,000+=$150.
+// ── Kicker payout rules ───────────────────────────────────────────────────────
+// Standard rates (every period except the September 2026 incentive window):
+//   Tiered types - Thryv Leads (TL), SEO (not Keyword Add On), Leads Lift:
+//     $100-$249 = $10 | $250-$999 = $25 | $1,000-$1,999 = $100 | $2,000+ = $150
+//   New Thryv Social Ads and Thryv Social Ads Increase = $25 flat.
+//
+// September 2026 incentive - applies when Date SaaS Growth Occured is Sep 1-30, 2026:
+//   Tiered types, plus Thryv Social Ads Increase which moves into the tiered group:
+//     $100-$999 = $50 | $1,000-$1,999 = $100 | $2,000+ = $150
+//   New Thryv Social Ads = $50 flat at any MRR.
+//   Rates revert to standard automatically on Oct 1 - the window is date-bound.
+//
+// New MC and SaaS Add-On count toward the 3-growth threshold but never pay a kicker.
 // Payout applies starting at the 4th growth per quarter (any type counts toward threshold).
-function getKickerRate(gt,amt){
+const SEPT_START='2026-09-01', SEPT_END='2026-09-30';
+function growthDateKey(r){
+  const m=String((r&&r['Date SaaS Growth Occured'])||'').match(/^\d{4}-\d{2}-\d{2}/);
+  return m?m[0]:'';
+}
+function inSeptWindow(dateKey){return !!dateKey&&dateKey>=SEPT_START&&dateKey<=SEPT_END;}
+// Counts toward the growth goal, never earns a kicker.
+function isKickerExcluded(gt){
+  return gt.startsWith('New MC')||gt==='MC Upgrade'||gt.includes('SaaS Add');
+}
+function isTieredType(gt){
+  if(isKickerExcluded(gt))return false;
+  return gt.includes('TL')||gt.includes('Leads Lift')||(gt.includes('SEO')&&gt!=='SEO Keyword Add On');
+}
+function septTier(amt){
+  if(amt>=2000)return 150;if(amt>=1000)return 100;if(amt>=100)return 50;return 0;
+}
+function standardTier(amt){
+  if(amt>=2000)return 150;if(amt>=1000)return 100;if(amt>=250)return 25;if(amt>=100)return 10;return 0;
+}
+function getKickerRate(gt,amt,dateKey){
   gt=(gt||'').trim();
-  if(gt==='New Thryv Social Ads'||gt==='Thryv Social Ads Increase')return 25;
-    const isTiered=(gt.includes('TL')||gt.includes('Leads Lift')||gt.startsWith('New MC')||gt.includes('SaaS Add')||(gt.includes('SEO')&&gt!=='SEO Keyword Add On'));
-  if(!isTiered)return 0;
-  if(amt>=2000)return 150;if(amt>=1000)return 100;if(amt>=250)return 25;if(amt>=100)return 10;
-  return 0;
+  if(isKickerExcluded(gt))return 0;
+  const sept=inSeptWindow(dateKey);
+  if(gt==='New Thryv Social Ads')return sept?50:25;
+  if(gt==='Thryv Social Ads Increase')return sept?septTier(amt):25;
+  if(!isTieredType(gt))return 0;
+  return sept?septTier(amt):standardTier(amt);
 }
 function thresholdSet(qRows){
   const idx=qRows.map((_,i)=>i).sort((a,b)=>(Number(qRows[a]['SaaS Growth'])||0)-(Number(qRows[b]['SaaS Growth'])||0));
@@ -343,7 +374,7 @@ function calcQtdPayout(pcsm,quarter){
   const qRows=DATA.filter(r=>(r['PCSM']||'').trim()===pcsm&&r['Quarter']===quarter);
   if(qRows.length<=3)return 0;
   const skip=thresholdSet(qRows);
-  return qRows.reduce((sum,r,i)=>sum+(skip.has(i)?0:getKickerRate((r['SaaS Growth Type']||'').trim(),Number(r['SaaS Growth'])||0)),0);
+  return qRows.reduce((sum,r,i)=>sum+(skip.has(i)?0:getKickerRate((r['SaaS Growth Type']||'').trim(),Number(r['SaaS Growth'])||0,growthDateKey(r))),0);
 }
 function svgEl(id){return document.getElementById(id);}
 function svgW(id){const el=svgEl(id);if(!el)return 600;const w=el.parentElement.getBoundingClientRect().width-44;return w>80?w:600;}
@@ -734,7 +765,7 @@ function buildGrowthLog(rows){
       qKickSeq[q]++;
       statusLabel='Kicker #'+qKickSeq[q];
       statusColor='#2D9D6A';
-      payout=getKickerRate(gt,amt);
+      payout=getKickerRate(gt,amt,growthDateKey(r));
     }
     return{q,date:fmtDate(r['Date SaaS Growth Occured']),account:(r['Account name']||'').trim(),gt,amt,statusLabel,statusColor,payout,isKicker};
   });
@@ -777,6 +808,41 @@ function renderCoach(){
   requestAnimationFrame(()=>{drawMonthly('cc1',aggMonthly(rows));drawHBar('cc2',pcsms,'name','total',NAVY,false,0);drawHBar('cc3',aggType(rows),'type','d',ORANGE,true,8,'o');});
 }
 
+// September bonus: CSM with the highest total SaaS Growth MRR for Sep 1-30, 2026.
+// Display only. The $200 is deliberately NOT added to any payout figure, because the
+// leader can change day to day until the month closes.
+function septBonusLeader(){
+  const tot={};
+  DATA.forEach(r=>{
+    if(!inSeptWindow(growthDateKey(r)))return;
+    const p=(r['PCSM']||'').trim();if(!p)return;
+    tot[p]=(tot[p]||0)+(Number(r['SaaS Growth'])||0);
+  });
+  const ranked=Object.entries(tot).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  if(!ranked.length)return null;
+  const top=ranked[0][1];
+  return {names:ranked.filter(([,v])=>v===top).map(([n])=>n),amount:top,contenders:ranked.length};
+}
+function septBonusBanner(quarter){
+  if(quarter!=='Q3 2026')return '';
+  const b=septBonusLeader();
+  const shell=(inner)=>'<div class="panel full" style="border-left:4px solid #FF5000;background:#FFF8F5;margin-bottom:18px">'+inner+'</div>';
+  const head='<div class="panel-title" style="color:#FF5000">September Bonus &mdash; Highest SaaS Growth MRR</div>';
+  if(!b)return shell(head+'<div class="panel-sub" style="margin-bottom:0">No September growth recorded yet. The $200 bonus leader will appear here once September entries land.</div>');
+  const tie=b.names.length>1;
+  const who=b.names.join(' &amp; ');
+  return shell(head+
+    '<div style="display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;margin-top:2px">'+
+      '<div style="font-size:26px;font-weight:800;color:#0F1735;line-height:1.1">'+who+'</div>'+
+      '<div style="font-size:22px;font-weight:800;color:#2D9D6A">$'+Math.round(b.amount).toLocaleString()+'</div>'+
+      '<div style="font-size:12px;font-weight:700;color:#FF5000;letter-spacing:.4px">+$200 BONUS</div>'+
+    '</div>'+
+    '<div class="panel-sub" style="margin-top:6px;margin-bottom:0">'+
+      (tie?'Tied for the lead. ':'')+
+      'Total SaaS Growth MRR for Sep 1&ndash;30 across '+b.contenders+' employees with September growth. '+
+      'Standings move as new growth is approved. The $200 is not included in the payout column below &mdash; add it once the month closes.'+
+    '</div>');
+}
 function renderKickers(){
   const cont=document.getElementById('kickers-content');
   if(!DATA.length){cont.innerHTML='<div class="empty-state"><h3>No data loaded</h3></div>';return;}
@@ -797,7 +863,7 @@ function renderKickers(){
     return`<span style="color:#A0AEC0">${d.opps}/3 &mdash; ${4-d.opps} more to qualify</span>`;
   };
   const trows=kData.map((d,i)=>`<tr style="${d.noQ2?'opacity:.5':''}"><td><strong>${i+1}</strong></td><td><strong style="color:#0F1735">${d.name}</strong></td><td style="color:#718096">${d.coach}</td><td style="text-align:center">${d.noQ2?'<span style="color:#A0AEC0">0</span>':d.opps}</td><td style="text-align:center">${tc(d)}</td><td style="text-align:center">${d.kickers>0?'<span class="badge-kicker">'+d.kickers+'</span>':'<span class="badge-zero">0</span>'}</td><td style="text-align:center;font-weight:700;color:${d.payout>0?'#2D9D6A':'#A0AEC0'}">${d.payout>0?'$'+d.payout.toLocaleString():'&mdash;'}</td></tr>`).join('');
-  cont.innerHTML=`<div class="kpi-row-5">
+  cont.innerHTML=`${septBonusBanner(kqtr)}<div class="kpi-row-5">
     <div class="kpi"><div class="kpi-val">${totalK}</div><div class="kpi-lbl">Total Team Kickers <span class="qtd-label">${kqtr}</span></div></div>
     <div class="kpi"><div class="kpi-val">${qualified}</div><div class="kpi-lbl">Employees Qualified <span class="qtd-label">${kqtr}</span></div></div>
     <div class="kpi"><div class="kpi-val">${kData.length-qualified-noQ2}</div><div class="kpi-lbl">Working Toward Threshold</div></div>
