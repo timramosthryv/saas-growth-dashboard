@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - 'data.xlsx'
+      - 'template.html'
+      - 'build.py'
   workflow_dispatch:
 
 jobs:
