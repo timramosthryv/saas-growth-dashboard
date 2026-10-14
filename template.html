@@ -524,13 +524,17 @@ function drawCoachSlope(id,data){
 
 function drawPCSMRanked(id,data,teamAvg){
   const el=svgEl(id);if(!el)return;el.replaceChildren();
-  if(!data?.length){const W=svgW(id);el.setAttribute('height',80);el.setAttribute('viewBox',`0 0 ${W} 80`);t(el,W/2,40,'No data',{'text-anchor':'middle',fill:MUTED,'font-size':13});return;}
-  const n=data.length,ROW_H=26,P={t:28,r:100,b:24,l:160};
+  if(!data?.length){const W=svgW(id);el.setAttribute('height',80);el.setAttribute('viewBox','0 0 '+W+' 80');t(el,W/2,40,'No data',{'text-anchor':'middle',fill:MUTED,'font-size':13});return;}
+  // Right side holds two columns: Growths (approved growths in the period, counted the same way as the Kickers tab) and Avg Deal.
+  const GC=76,AC=100;
+  const n=data.length,ROW_H=26,P={t:28,r:GC+AC,b:24,l:160};
   const W=svgW(id),H=P.t+n*ROW_H+P.b;
-  el.setAttribute('height',H);el.setAttribute('viewBox',`0 0 ${W} ${H}`);
-  const CW=W-P.l-P.r,maxV=data[0].total*1.1||1,AVG=teamAvg||1289;
+  el.setAttribute('height',H);el.setAttribute('viewBox','0 0 '+W+' '+H);
+  const CW=W-P.l-P.r-8,maxV=data[0].total*1.1||1,AVG=teamAvg||1289;
+  const gx=W-P.r+4,gw=GC-10,ax=W-AC+2,aw=AC-6;
   t(el,P.l+CW/2,18,'Total Dollars',{'text-anchor':'middle',fill:MUTED,'font-size':10,'font-weight':700});
-  t(el,W-P.r/2,18,'Avg Deal',{'text-anchor':'middle',fill:MUTED,'font-size':10,'font-weight':700});
+  t(el,gx+gw/2,18,'Growths',{'text-anchor':'middle',fill:MUTED,'font-size':10,'font-weight':700});
+  t(el,ax+aw/2,18,'Avg Deal',{'text-anchor':'middle',fill:MUTED,'font-size':10,'font-weight':700});
   data.forEach((d,i)=>{
     const y=P.t+i*ROW_H,midY=y+ROW_H/2,bh=ROW_H*0.62,bw=(d.total/maxV)*CW;
     if(i%2===0)s('rect',{x:0,y,width:W,height:ROW_H,fill:'#FAFBFD'},el);
@@ -540,12 +544,13 @@ function drawPCSMRanked(id,data,teamAvg){
     s('rect',{x:P.l,y:midY-bh/2,width:bw,height:bh,fill:bc,rx:3},el);
     if(bw>60)t(el,P.l+bw-5,midY+4,fmtD(d.total),{'text-anchor':'end',fill:'white','font-size':10,'font-weight':700});
     else t(el,P.l+bw+5,midY+4,fmtD(d.total),{fill:NAVY,'font-size':10,'font-weight':600});
-    t(el,P.l+CW+4,midY+4,d.opps+' opps',{fill:MUTED,'font-size':9});
-    const above=d.avg>=AVG,px=W-P.r+2,pw=P.r-6;
-    s('rect',{x:px,y:midY-bh/2,width:pw,height:bh,fill:above?'#F0FFF8':'#FFF5F5',rx:8},el);
-    t(el,px+pw/2,midY+4,'$'+d.avg.toLocaleString(),{'text-anchor':'middle',fill:above?GREEN:RED,'font-size':10,'font-weight':700});
+    s('rect',{x:gx,y:midY-bh/2,width:gw,height:bh,fill:'#EEF1F7',rx:8},el);
+    t(el,gx+gw/2,midY+4,d.opps.toLocaleString(),{'text-anchor':'middle',fill:NAVY,'font-size':10,'font-weight':700});
+    const above=d.avg>=AVG;
+    s('rect',{x:ax,y:midY-bh/2,width:aw,height:bh,fill:above?'#F0FFF8':'#FFF5F5',rx:8},el);
+    t(el,ax+aw/2,midY+4,'$'+d.avg.toLocaleString(),{'text-anchor':'middle',fill:above?GREEN:RED,'font-size':10,'font-weight':700});
   });
-  t(el,P.l,H-6,'Team avg $'+AVG.toLocaleString()+' — green = above avg, red = below avg',{fill:MUTED,'font-size':10});
+  t(el,P.l,H-6,'Team avg $'+AVG.toLocaleString()+' | Growths = approved growths in the period, counted the same way as the Kickers tab | green = above avg, red = below avg',{fill:MUTED,'font-size':10});
 }
 
 function drawBA(id,data){
