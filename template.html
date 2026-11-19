@@ -366,14 +366,29 @@ function getKickerRate(gt,amt,dateKey){
   if(!isTieredType(gt))return 0;
   return sept?septTier(amt):standardTier(amt);
 }
-function thresholdSet(qRows){
-  const idx=qRows.map((_,i)=>i).sort((a,b)=>(Number(qRows[a]['SaaS Growth'])||0)-(Number(qRows[b]['SaaS Growth'])||0));
-  return new Set(idx.slice(0,3));
+// Threshold selection (the 3 growths per quarter that count toward the goal but do not pay).
+// Default: the 3 lowest-dollar growths.
+// Payout-optimized quarters: growths that pay the least kicker fill the threshold first
+// (e.g. New MC, SaaS Add-On), so a rep is never penalized by having a paying growth used
+// as a qualifier. Ties on payout fall back to lowest dollar amount. Earlier quarters are unchanged.
+const PAYOUT_OPTIMIZED_QTRS=new Set(['Q4 2026']);
+function rowKickerRate(r){return getKickerRate((r['SaaS Growth Type']||'').trim(),Number(r['SaaS Growth'])||0,growthDateKey(r));}
+function thresholdOrder(rows,quarter){
+  const amt=i=>Number(rows[i]['SaaS Growth'])||0;
+  const idx=rows.map((_,i)=>i);
+  if(PAYOUT_OPTIMIZED_QTRS.has((quarter||'').trim())){
+    const pay=idx.map(i=>rowKickerRate(rows[i]));
+    return idx.sort((a,b)=>(pay[a]-pay[b])||(amt(a)-amt(b)));
+  }
+  return idx.sort((a,b)=>amt(a)-amt(b));
+}
+function thresholdSet(qRows,quarter){
+  return new Set(thresholdOrder(qRows,quarter).slice(0,3));
 }
 function calcQtdPayout(pcsm,quarter){
   const qRows=DATA.filter(r=>(r['PCSM']||'').trim()===pcsm&&r['Quarter']===quarter);
   if(qRows.length<=3)return 0;
-  const skip=thresholdSet(qRows);
+  const skip=thresholdSet(qRows,quarter);
   return qRows.reduce((sum,r,i)=>sum+(skip.has(i)?0:getKickerRate((r['SaaS Growth Type']||'').trim(),Number(r['SaaS Growth'])||0,growthDateKey(r))),0);
 }
 function svgEl(id){return document.getElementById(id);}
@@ -750,9 +765,9 @@ function buildGrowthLog(rows){
   const byQ={};
   sorted.forEach((r,i)=>{const q=(r['Quarter']||'').trim();if(!byQ[q])byQ[q]=[];byQ[q].push(i);});
   const threshIdx={};
-  Object.values(byQ).forEach(indices=>{
-    const byAmt=[...indices].sort((ia,ib)=>(Number(sorted[ia]['SaaS Growth'])||0)-(Number(sorted[ib]['SaaS Growth'])||0));
-    byAmt.slice(0,3).forEach((idx,rank)=>{threshIdx[idx]=rank+1;});
+  Object.entries(byQ).forEach(([q,indices])=>{
+    const qRows=indices.map(i=>sorted[i]);
+    thresholdOrder(qRows,q).slice(0,3).forEach((local,rank)=>{threshIdx[indices[local]]=rank+1;});
   });
   const qKickSeq={};
   return sorted.map((r,i)=>{
@@ -798,7 +813,7 @@ function renderPCSM(){
   }).join('');
   const logCols=isQTD?6:7;
   const logFoot=logTotalPayout>0?`<tfoot><tr style="background:#F5F7FA"><td colspan="${logCols}" style="text-align:right;font-size:12px;font-weight:700;color:#718096;padding:10px 14px">Total Kicker Payout</td><td style="text-align:right;font-weight:700;color:#2D9D6A;padding:10px 14px">$${logTotalPayout.toLocaleString()}</td></tr></tfoot>`:'';
-  const logSection=`<div class="grid" style="grid-template-columns:1fr"><div class="panel full"><div class="panel-title">Growth Detail — ${isQTD?qtr:'YTD'}</div><div class="panel-sub">Every growth in order by date. The 3 lowest-dollar amounts each quarter are the threshold (no payout). All others earn a kicker for qualifying types.</div><table class="log-table"><thead><tr><th style="text-align:center">#</th><th>Date</th>${!isQTD?'<th>Quarter</th>':''}<th>Account</th><th>Growth Type</th><th style="text-align:right">Amount</th><th style="text-align:center">Threshold Status</th><th style="text-align:right">Kicker Payout</th></tr></thead><tbody>${logTbody}</tbody>${logFoot}</table></div></div>`;
+  const logSection=`<div class="grid" style="grid-template-columns:1fr"><div class="panel full"><div class="panel-title">Growth Detail — ${isQTD?qtr:'YTD'}</div><div class="panel-sub">${isQTD&&PAYOUT_OPTIMIZED_QTRS.has(qtr)?'Every growth in order by date. The threshold (no payout) is filled first by growths that do not pay a kicker, then by the lowest-dollar amounts, so each rep receives the highest payout available. All others earn a kicker for qualifying types.':'Every growth in order by date. The 3 lowest-dollar amounts each quarter are the threshold (no payout). All others earn a kicker for qualifying types.'}</div><table class="log-table"><thead><tr><th style="text-align:center">#</th><th>Date</th>${!isQTD?'<th>Quarter</th>':''}<th>Account</th><th>Growth Type</th><th style="text-align:right">Amount</th><th style="text-align:center">Threshold Status</th><th style="text-align:right">Kicker Payout</th></tr></thead><tbody>${logTbody}</tbody>${logFoot}</table></div></div>`;
   cont.innerHTML=`<div class="${grid}"><div class="kpi"><div class="kpi-val">$${Math.round(total).toLocaleString()}</div><div class="kpi-lbl">Total Growth${isQTD?` <span class="qtd-label">${qtr}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">${opps}</div><div class="kpi-lbl">Opportunities${isQTD?` <span class="qtd-label">${qtr}</span>`:''}</div></div><div class="kpi"><div class="kpi-val">$${avg.toLocaleString()}</div><div class="kpi-lbl">Avg Deal Size</div></div><div class="kpi"><div class="kpi-val">${baRate}</div><div class="kpi-lbl">BA Rate</div></div>${kTile}</div><div class="grid"><div class="panel full"><div style="font-size:12px;color:#718096">Coach: <strong style="color:#0F1735">${coach}</strong>&nbsp;&nbsp;\xb7&nbsp;&nbsp;Top Type: <strong style="color:#FF5000">${ta[0]?.type||'--'}</strong></div></div><div class="panel full"><div class="panel-title">${isQTD?qtr+' ':''}Monthly Growth — ${pcsm}</div><svg id="pc1" height="210"></svg></div><div class="panel"><div class="panel-title">Growth by Type</div><svg id="pc2" height="280"></svg></div><div class="panel"><div class="panel-title">Net New vs. Upgrades</div><svg id="pc6" height="280"></svg></div></div>${logSection}`;
   requestAnimationFrame(()=>{drawMonthly('pc1',aggMonthly(rows));drawHBar('pc2',ta,'type','d',ORANGE,true,8,'o');drawNN('pc6',aggNN(rows));});
 }
